@@ -1,0 +1,71 @@
+# name: test/sql/cvss_offline.test
+# description: Offline CVSS scalar functions (no network / no mock required)
+# group: [vgi_cve]
+
+require-env VGI_CVE_WORKER
+
+# haybarn-unittest does NOT autoload the extension for `require vgi` (it is
+# silently SKIPPED). Load it explicitly instead.
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'cve' AS cve (TYPE vgi, LOCATION '${VGI_CVE_WORKER}');
+
+# ---- cvss_severity bands ----
+
+query T
+SELECT cve.cvss_severity(0.0);
+----
+NONE
+
+query T
+SELECT cve.cvss_severity(3.9);
+----
+LOW
+
+query T
+SELECT cve.cvss_severity(5.0);
+----
+MEDIUM
+
+query T
+SELECT cve.cvss_severity(7.5);
+----
+HIGH
+
+query T
+SELECT cve.cvss_severity(9.8);
+----
+CRITICAL
+
+# ---- cvss_base_score from vector strings ----
+
+# Canonical worst-case (Scope:Unchanged) -> 9.8.
+query T
+SELECT ROUND(cve.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'), 1);
+----
+9.8
+
+# Log4Shell (Scope:Changed) -> 10.0.
+query T
+SELECT ROUND(cve.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H'), 1);
+----
+10.0
+
+# Heartbleed (confidentiality only) -> 7.5.
+query T
+SELECT ROUND(cve.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N'), 1);
+----
+7.5
+
+# Compose the two scalars: score a vector then band it.
+query T
+SELECT cve.cvss_severity(cve.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'));
+----
+CRITICAL
+
+# A malformed vector surfaces a clean error (not a crash).
+statement error
+SELECT cve.cvss_base_score('not-a-vector');
+----

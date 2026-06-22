@@ -1,0 +1,66 @@
+# name: test/sql/cve_api.test
+# description: NVD 2.0 table functions against the local mock server
+# group: [vgi_cve]
+
+require-env VGI_CVE_WORKER
+
+require-env VGI_CVE_TEST_URL
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'cve' AS cve (TYPE vgi, LOCATION '${VGI_CVE_WORKER}');
+
+# ---- cve(): fetch one CVE by ID via the mock base_url ----
+
+query I
+SELECT count(*) FROM cve.cve('CVE-2021-44228', base_url := '${VGI_CVE_TEST_URL}');
+----
+1
+
+query TRTT
+SELECT id, cvss_score, cvss_severity, cwe
+FROM cve.cve('CVE-2021-44228', base_url := '${VGI_CVE_TEST_URL}');
+----
+CVE-2021-44228	10.0	CRITICAL	CWE-502
+
+# The fetched vector recomputes to the same score with the offline scalar.
+query T
+SELECT ROUND(cve.cvss_base_score(cvss_vector), 1)
+FROM cve.cve('CVE-2021-44228', base_url := '${VGI_CVE_TEST_URL}');
+----
+10.0
+
+# ---- cve_search(): paginated keyword search ----
+
+query I
+SELECT count(*) FROM cve.cve_search('log4j', base_url := '${VGI_CVE_TEST_URL}');
+----
+3
+
+query I
+SELECT count(*) FROM cve.cve_search('log4j', base_url := '${VGI_CVE_TEST_URL}')
+WHERE cvss_severity = 'CRITICAL';
+----
+2
+
+# ---- cpe_cves(): CVEs for a CPE name, including a NULL-score record ----
+
+query I
+SELECT count(*) FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*', base_url := '${VGI_CVE_TEST_URL}');
+----
+3
+
+# A CVE with no CVSS metrics surfaces a NULL score.
+query I
+SELECT count(*) FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*', base_url := '${VGI_CVE_TEST_URL}')
+WHERE cvss_score IS NULL;
+----
+1
+
+# ---- unknown CVE -> clean error (mock returns 404) ----
+
+statement error
+SELECT * FROM cve.cve('CVE-0000-99999', base_url := '${VGI_CVE_TEST_URL}');
+----
