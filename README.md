@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="docs/vgi-logo.png" alt="Vector Gateway Interface (VGI)" width="320">
+</p>
+
+<p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
+
 # vgi-cve
 
 [![CI](https://github.com/Query-farm/vgi-cve/actions/workflows/ci.yml/badge.svg)](https://github.com/Query-farm/vgi-cve/actions/workflows/ci.yml)
@@ -128,3 +134,12 @@ project is not endorsed by or affiliated with NIST.
   NVD client and CVSS math, plus the [`vgi-go`](https://github.com/Query-farm/vgi-go)
   SDK (and its Arrow dependency) for the VGI protocol — see that repo for its
   terms.
+
+---
+
+## Authorship & License
+
+Written by [Query.Farm](https://query.farm) — every VGI worker is designed and built by Query.Farm.
+
+Copyright 2026 Query Farm LLC - https://query.farm
+
