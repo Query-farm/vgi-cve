@@ -4,7 +4,9 @@
 
 <p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
 
-# vgi-cve
+# CVE/NVD Lookup with Offline CVSS Scoring in DuckDB
+
+> **vgi-cve** · a [Query.Farm](https://query.farm) VGI worker
 
 [![CI](https://github.com/Query-farm/vgi-cve/actions/workflows/ci.yml/badge.svg)](https://github.com/Query-farm/vgi-cve/actions/workflows/ci.yml)
 
