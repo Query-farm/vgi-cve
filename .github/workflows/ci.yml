@@ -48,5 +48,21 @@ jobs:
           uv tool install haybarn-unittest
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      # The .test files LOAD the `vgi` extension (a signed DuckDB community
+      # extension). On a dev box it's already installed; on a clean CI runner we
+      # must install it into haybarn's extension cache first, otherwise LOAD vgi
+      # fails with "Extension ... vgi.duckdb_extension not found".
+      - name: Warm vgi community extension
+        run: |
+          mkdir -p /tmp/hbwarm
+          cat > /tmp/hbwarm/_warm.test <<'EOF'
+          # name: _warm.test
+          # group: [warm]
+
+          statement ok
+          INSTALL vgi FROM community;
+          EOF
+          haybarn-unittest /tmp/hbwarm/_warm.test
+
       - name: SQL end-to-end
         run: make test-sql
