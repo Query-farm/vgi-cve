@@ -273,7 +273,7 @@ func (c *Client) get(ctx context.Context, q url.Values) (*nvdResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("nvd: request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // best-effort close; read errors are surfaced below
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 64<<20))
 	if err != nil {
