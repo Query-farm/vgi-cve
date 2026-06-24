@@ -6,11 +6,11 @@ package cveworker
 // vgi-lint strict profile (0.23.0) expects on EVERY function and table.
 //
 // Each function/table surfaces these in its FunctionMetadata.Tags:
-//   - vgi.title           (VGI124) — human-friendly display name
-//   - vgi.description_llm (VGI112) — concise prose aimed at LLMs
-//   - vgi.description_md  (VGI113) — short Markdown description
-//   - vgi.keywords        (VGI126) — comma-separated search terms/synonyms
-//   - vgi.source_url      (VGI128) — link to the implementing source file
+//   - vgi.title       (VGI124) — human-friendly display name
+//   - vgi.doc_llm     (VGI112) — Markdown narrative aimed at LLMs/agents
+//   - vgi.doc_md      (VGI113) — Markdown narrative for human docs
+//   - vgi.keywords    (VGI126) — comma-separated search terms/synonyms
+//   - vgi.source_url  (VGI128) — link to the implementing source file
 //
 // sourceURL(file) builds the canonical GitHub blob URL for a source file so
 // every object points at exactly where it is implemented.
@@ -29,17 +29,17 @@ func sourceURL(relativePath string) string {
 // relativePath is the implementing file relative to internal/cveworker.
 func objectTags(title, descriptionLLM, descriptionMD, keywords, relativePath string) map[string]string {
 	return map[string]string{
-		"vgi.title":           title,
-		"vgi.description_llm": descriptionLLM,
-		"vgi.description_md":  descriptionMD,
-		"vgi.keywords":        keywords,
-		"vgi.source_url":      sourceURL(relativePath),
+		"vgi.title":      title,
+		"vgi.doc_llm":    descriptionLLM,
+		"vgi.doc_md":     descriptionMD,
+		"vgi.keywords":   keywords,
+		"vgi.source_url": sourceURL(relativePath),
 	}
 }
 
-// withColumnsMD returns objectTags plus a vgi.columns_md table-shape doc.
+// withColumnsMD returns objectTags plus a vgi.result_columns_md table-shape doc.
 func withColumnsMD(title, descriptionLLM, descriptionMD, keywords, relativePath, columnsMD string) map[string]string {
 	t := objectTags(title, descriptionLLM, descriptionMD, keywords, relativePath)
-	t["vgi.columns_md"] = columnsMD
+	t["vgi.result_columns_md"] = columnsMD
 	return t
 }
