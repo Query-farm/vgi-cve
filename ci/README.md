@@ -5,6 +5,45 @@ tests and this repo's sqllogictest suite (`test/sql/*.test`) against the
 vgi-cve VGI worker through the **real DuckDB `vgi` extension** on every push /
 PR.
 
+## Transport matrix
+
+The same SQL suite runs over **every transport the vgi extension supports**, as
+a GitHub Actions matrix (`SQL E2E (subprocess)`, `SQL E2E (http)`,
+`SQL E2E (unix)`). The transport is selected by the `TRANSPORT` env var passed
+to [`run-integration.sh`](run-integration.sh), which only changes what the
+`.test` files ATTACH as the worker `LOCATION` (the vgi extension picks the
+transport from that string):
+
+| `TRANSPORT`  | Worker launch                              | `VGI_CVE_WORKER` (ATTACH LOCATION)     |
+| ------------ | ------------------------------------------ | -------------------------------------- |
+| `subprocess` | extension spawns the binary over stdio     | `/abs/path/to/vgi-cve-worker`          |
+| `http`       | `vgi-cve-worker --http` (prints `PORT:<n>`) | `http://127.0.0.1:<port>`              |
+| `unix`       | `vgi-cve-worker --unix <sock>` (prints `UNIX:<path>`) | `unix://<sock>`             |
+
+Port/socket discovery: for **http** the script parses the `PORT:<n>` line the
+SDK prints on stdout (`vgi/worker.go` `RunHttp`); for **unix** it waits for the
+`UNIX:<path>` line *and* for the socket file to exist before running the suite.
+The HTTP `LOCATION` is the **bare** `scheme://host:port` with no path — the
+extension POSTs each RPC method at `<LOCATION>/<method>` (e.g.
+`/catalog_attach`), and the Go SDK mounts those at the server root; appending a
+`/vgi` path would 404 every method.
+
+**The mock NVD server runs for every transport.** The cve worker's table
+functions (`cve`, `cve_search`, `cpe_cves`) still make a live NVD 2.0 HTTP call
+regardless of how DuckDB talks to the worker, so the script always builds and
+starts `mockserver`, exports `VGI_CVE_TEST_URL`, and trap-kills it (plus any
+out-of-band worker process) on exit.
+
+### Silent-skip guard (no fake passes)
+
+The DuckDB/Haybarn sqllogictest runner **skips** (exit 0, not a failure) any
+test whose error message matches a built-in network-error allowlist that
+includes the substring `HTTP`. A broken HTTP transport would therefore report
+"All tests were skipped" and the job would go *green having run nothing*.
+`run-integration.sh` guards against this: it captures the runner output and
+**fails the leg** if every test was skipped, surfacing the runner's skip
+reason. A real run must print `All tests passed (N assertions ...)`.
+
 ## How it works (no C++ build)
 
 Rather than building the vgi DuckDB extension from source, CI drives a
