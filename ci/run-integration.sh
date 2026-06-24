@@ -160,38 +160,16 @@ case "$TRANSPORT" in
     ;;
 esac
 
-# Tests GATED for the http transport (run on subprocess/unix only). See the
-# block below and ci/README.md for the protocol reason — these are real
-# stateless-HTTP limitations, not flaky failures, so we never fake a pass.
-HTTP_GATED_TESTS="cve_api.test"
-
 # --- Stage the preprocessed tests -------------------------------------------
+# The FULL suite runs over every transport, including http. The cve/cve_search/
+# cpe_cves streaming table functions work over the stateless HTTP transport
+# because their state carries an explicit gob-encodable cursor (Rows + Offset)
+# that the framework snapshots into the continuation token each tick — see the
+# "WHY A CURSOR" comment in internal/cveworker/functions.go. No tests are gated.
 echo "Staging preprocessed tests into $STAGE ..."
 mkdir -p "$STAGE/test/sql"
 for f in "$REPO"/test/sql/*.test; do
-  base="$(basename "$f")"
-  # Gate stateful-streaming table-function tests out of the http leg. The cve/
-  # cve_search/cpe_cves table functions stream their result across multiple
-  # Process exchanges, signalling end-of-stream with per-execution state
-  # (state.Done): the FIRST Process emits the batch, the NEXT returns Finish().
-  # The vgi extension's HTTP transport is STATELESS — each RPC is an independent
-  # request, so the worker's per-execution state object does not persist across
-  # the two exchanges (the SDK itself disables deferred storage cleanup in HTTP
-  # mode: "no reliable stream-end signal"). The Done flag therefore resets every
-  # request, Process re-emits the same batch forever, and the scan never reaches
-  # Finish() — the worker spins re-binding indefinitely. This is the recipe's
-  # documented "partition-local state across exchanges" HTTP limitation. Run the
-  # offline-scalar coverage over http (it is request/response, no streaming
-  # state) and gate the table-function file to subprocess/unix.
-  if [ "$TRANSPORT" = "http" ]; then
-    gated=""
-    for g in $HTTP_GATED_TESTS; do [ "$g" = "$base" ] && gated=1; done
-    if [ -n "$gated" ]; then
-      echo "::notice::GATED on http: $base (stateful streaming table functions cannot stream over the stateless HTTP transport)"
-      continue
-    fi
-  fi
-  awk -f "$HERE/preprocess-require.awk" "$f" > "$STAGE/test/sql/$base"
+  awk -f "$HERE/preprocess-require.awk" "$f" > "$STAGE/test/sql/$(basename "$f")"
 done
 
 # The HTTP transport needs DuckDB's HTTP client, which the vgi extension drives

@@ -65,8 +65,10 @@ w.RunStdio()            // or w.RunHttp("127.0.0.1:0") behind a --http flag
 - **Table**: a `vgi.TypedTableFunc[S]` wrapped with `vgi.AsTableFunction[S]`.
   Methods: `Name`, `Metadata`, `ArgumentSpecs` (from `vgi.DeriveArgSpecs(args{})`),
   `OnBind` (→ `vgi.BindSchema(schema)`), `NewState` (bind args with
-  `vgi.BindArgs`; do the network fetch here), `Process` (emit with `out.Emit`,
-  then `out.Finish()`).
+  `vgi.BindArgs`; do the network fetch here, store `Rows`+`Offset`), `Process`
+  (emit the next cursor slice with `out.Emit`, advance `Offset`, then
+  `out.Finish()` when the cursor is drained — see Sharp edge #1 for why the
+  cursor is mandatory for HTTP).
 
 **Argument struct tags** (`vgi.DeriveArgSpecs` / `vgi.BindArgs`):
 
@@ -90,13 +92,31 @@ column (the NULL `cvss_score`), build a `array.Float64Builder` directly and call
 ## Sharp edges (learned the hard way)
 
 1. **Table-function state is `gob`-encoded by the SDK** between `NewState` and
-   `Process` (it may cross a process boundary), and the SDK now **panics at
+   `Process` (it may cross a process boundary), and the SDK **panics at
    registration** if state isn't gob-encodable. So state `S` must have
    **exported, gob-encodable fields only** — no `arrow.Record`, no interfaces,
-   channels, funcs, or unexported fields. The pattern every table function here
-   uses: **fetch rows eagerly in `NewState`**, store plain exported Go slices
-   (`Rows []CVERow`) plus a `Done bool`, and **rebuild the Arrow batch in
-   `Process`**. `TestRegisterDoesNotPanic` guards against regressions.
+   channels, funcs, or unexported fields. (The exported-field check counts named
+   exported fields, so an embedded helper type must itself be **exported** —
+   `CursorState`, not `cursorState` — or the worker panics at startup.) The
+   pattern every table function here uses: **fetch rows eagerly in `NewState`**,
+   store a plain exported Go slice (`Rows []CVERow`) plus an explicit cursor, and
+   **rebuild the Arrow batch in `Process`**. `TestRegisterDoesNotPanic` guards
+   against regressions.
+
+   **Streaming state MUST carry an explicit cursor, not a bare `Done bool`**
+   (the HTTP-continuation invariant). Over the **stateless HTTP transport** the
+   worker keeps no live state between `Process` ticks — the framework
+   round-trips the producer state through a continuation token (gob-snapshotting
+   the user state each tick, emitting ≤1 data batch per response, resuming from
+   the token). A `Done` flag flipped *after* the single `Emit` observes the
+   pre-`Emit` snapshot on resume, re-emits the same rows forever, and pins the
+   worker in an infinite loop (subprocess/unix hold live state in memory, so they
+   never hit it). The fix: an exported cursor `Rows []CVERow; Offset int`
+   (`CursorState`). `Process` emits a bounded slice from `Offset`, advances
+   `Offset` **before** yielding, and `out.Finish()`es when `Offset >= len(Rows)`.
+   The framework snapshots `Offset` into the token, so HTTP resumes correctly and
+   terminates. `TestCursorSurvivesContinuation` (gob round-trips between ticks)
+   guards this.
 
 2. **`haybarn-unittest` silently SKIPS `require vgi`.** Under haybarn the
    extension is not autoloaded for `require`, so a `.test` using `require vgi`

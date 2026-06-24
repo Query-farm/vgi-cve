@@ -34,33 +34,39 @@ regardless of how DuckDB talks to the worker, so the script always builds and
 starts `mockserver`, exports `VGI_CVE_TEST_URL`, and trap-kills it (plus any
 out-of-band worker process) on exit.
 
+The **full** suite (offline scalars **and** the table-function `cve_api.test`)
+runs over all three transports — **no tests are gated**.
+
 ### HTTP transport specifics
 
-Two things are required for the **http** leg, both handled by
-`run-integration.sh` automatically:
+The **http** leg needs `httpfs` loaded, handled by `run-integration.sh`
+automatically: the vgi extension drives the worker-RPC HTTP POSTs through
+DuckDB's `HTTPUtil`, which is only registered once the signed core `httpfs`
+extension is loaded. The `.test` files only `LOAD vgi`, so for the http leg the
+script injects `INSTALL httpfs FROM core; LOAD httpfs;` after each `LOAD vgi;`
+in the staged copies. Without it every worker request fails with an
+`HTTP`-flavoured error that the runner silently skips.
 
-1. **`httpfs` must be loaded.** The vgi extension drives the worker-RPC HTTP
-   POSTs through DuckDB's `HTTPUtil`, which is only registered once the signed
-   core `httpfs` extension is loaded. The `.test` files only `LOAD vgi`, so for
-   the http leg the script injects `INSTALL httpfs FROM core; LOAD httpfs;`
-   after each `LOAD vgi;` in the staged copies. Without it every worker request
-   fails with an `HTTP`-flavoured error that the runner silently skips.
+#### Streaming table functions over HTTP (the cursor pattern)
 
-2. **`cve_api.test` is GATED on http** (runs on subprocess/unix only).
-   The `cve` / `cve_search` / `cpe_cves` table functions stream their result
-   across multiple `Process` exchanges and signal end-of-stream with
-   per-execution state (`state.Done`): the first `Process` emits the batch, the
-   next returns `Finish()`. The vgi extension's HTTP transport is **stateless**
-   — each RPC is an independent request, so the worker's per-execution state
-   does not persist between the two exchanges (the SDK itself disables its
-   deferred storage cleanup in HTTP mode: *"no reliable stream-end signal"*).
-   The `Done` flag resets on every request, `Process` re-emits the same batch
-   forever, and the scan never reaches `Finish()` — the worker spins
-   re-binding indefinitely. This is the documented *"partition-local state
-   across exchanges"* HTTP limitation, **not** a flaky failure, so we gate the
-   file rather than fake a pass. The offline CVSS scalars (`cvss_offline.test`)
-   are plain request/response with no streaming state and **do** run over http.
-   The gate list is `HTTP_GATED_TESTS` in `run-integration.sh`.
+The `cve` / `cve_search` / `cpe_cves` table functions stream their result across
+multiple `Process` exchanges. Over the **stateless** HTTP transport the worker
+holds no live state between ticks — the framework round-trips the producer state
+through an opaque continuation token (gob-encoding the user state after each
+tick, emitting at most one data batch per response, then resuming from the
+token). The position therefore **must live in the serialized state**: a bare
+post-`Emit` `Done bool` observes the pre-`Emit` snapshot on resume, re-emits the
+same rows forever, and pins the worker in an infinite loop (subprocess/unix keep
+the live state in memory, so they were unaffected and hid the bug).
+
+The fix is an explicit gob-encodable **cursor** in the state — `Rows []CVERow;
+Offset int` (`CursorState` in `internal/cveworker/functions.go`). `Process`
+emits a bounded slice starting at `Offset`, advances `Offset` **before**
+yielding, and calls `out.Finish()` once `Offset >= len(Rows)`. Because the
+framework snapshots `Offset` into each continuation token, HTTP resumes from the
+right row and terminates. `TestCursorSurvivesContinuation` guards this by
+gob-round-tripping the state between every simulated tick. This is the reference
+pattern for every streaming Go table function that must work over HTTP.
 
 ### Silent-skip guard (no fake passes)
 
