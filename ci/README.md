@@ -34,6 +34,34 @@ regardless of how DuckDB talks to the worker, so the script always builds and
 starts `mockserver`, exports `VGI_CVE_TEST_URL`, and trap-kills it (plus any
 out-of-band worker process) on exit.
 
+### HTTP transport specifics
+
+Two things are required for the **http** leg, both handled by
+`run-integration.sh` automatically:
+
+1. **`httpfs` must be loaded.** The vgi extension drives the worker-RPC HTTP
+   POSTs through DuckDB's `HTTPUtil`, which is only registered once the signed
+   core `httpfs` extension is loaded. The `.test` files only `LOAD vgi`, so for
+   the http leg the script injects `INSTALL httpfs FROM core; LOAD httpfs;`
+   after each `LOAD vgi;` in the staged copies. Without it every worker request
+   fails with an `HTTP`-flavoured error that the runner silently skips.
+
+2. **`cve_api.test` is GATED on http** (runs on subprocess/unix only).
+   The `cve` / `cve_search` / `cpe_cves` table functions stream their result
+   across multiple `Process` exchanges and signal end-of-stream with
+   per-execution state (`state.Done`): the first `Process` emits the batch, the
+   next returns `Finish()`. The vgi extension's HTTP transport is **stateless**
+   — each RPC is an independent request, so the worker's per-execution state
+   does not persist between the two exchanges (the SDK itself disables its
+   deferred storage cleanup in HTTP mode: *"no reliable stream-end signal"*).
+   The `Done` flag resets on every request, `Process` re-emits the same batch
+   forever, and the scan never reaches `Finish()` — the worker spins
+   re-binding indefinitely. This is the documented *"partition-local state
+   across exchanges"* HTTP limitation, **not** a flaky failure, so we gate the
+   file rather than fake a pass. The offline CVSS scalars (`cvss_offline.test`)
+   are plain request/response with no streaming state and **do** run over http.
+   The gate list is `HTTP_GATED_TESTS` in `run-integration.sh`.
+
 ### Silent-skip guard (no fake passes)
 
 The DuckDB/Haybarn sqllogictest runner **skips** (exit 0, not a failure) any
