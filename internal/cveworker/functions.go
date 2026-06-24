@@ -26,12 +26,62 @@ const CatalogName = "cve"
 // between NewState and Process (it may cross a process boundary). State structs
 // must therefore hold only EXPORTED, gob-encodable fields — no arrow.Record, no
 // interfaces, channels, funcs, or unexported fields. Each table function fetches
-// its rows eagerly in NewState, stores plain exported Go slices plus a Done
-// flag, and rebuilds the Arrow batch in Process.
+// its rows eagerly in NewState, stores a plain exported Go slice (Rows) plus an
+// EXPLICIT CURSOR (Offset), and rebuilds the Arrow batch in Process.
+//
+// WHY A CURSOR, NOT A bool Done (the HTTP-continuation fix):
+//
+// Over the HTTP transport the worker is STATELESS across exchanges — there is no
+// long-lived process holding the live state between Process ticks. Instead the
+// framework round-trips the producer state through an opaque continuation token:
+// after each tick it gob-encodes the state (snapshotting the LIVE user state),
+// the client returns the token, and the worker resumes by gob-decoding it. The
+// HTTP server emits at most `producerBatchLimit` data batches per response
+// (the SDK sets this to 1), so a producer that has more to emit is always
+// resumed mid-stream from its token.
+//
+// The position MUST therefore live in the serialized state. A bare `Done bool`
+// that is only flipped *after* the single Emit does not reliably survive the
+// limit-1 continuation boundary: the resumed tick observes the pre-Emit state,
+// re-emits the same rows, and the scan never terminates (an infinite loop that
+// pins the worker — subprocess/unix keep the live state in memory, so they were
+// unaffected and hid the bug). Carrying an explicit Offset that Process advances
+// BEFORE yielding makes the snapshot authoritative: the resume sees the advanced
+// Offset and emits the next slice (or Finishes when Offset >= len(Rows)). This
+// is the reference pattern for every streaming Go table function over HTTP.
+//
+// rowsPerTick bounds how many rows each Process tick emits. Emitting the whole
+// result in one batch is fine for these small NVD result sets, but emitting a
+// bounded slice and advancing the cursor each tick is what makes the cursor
+// observable across the continuation boundary (and scales to large results).
+const rowsPerTick = 64
 
-// emitState carries the "already emitted" flag shared by the table functions.
-type emitState struct {
-	Done bool
+// CursorState is the shared streaming cursor embedded by every table-function
+// state: the eagerly fetched rows plus the offset of the next unemitted row.
+// Both fields are exported so gob round-trips them through the HTTP continuation
+// token. The TYPE is exported too (CursorState, not cursorState) because the SDK
+// counts a state struct's exported FIELDS at registration to verify it is
+// gob-encodable — an embedded field named after an unexported type would not be
+// counted and the worker would panic at startup.
+type CursorState struct {
+	Rows   []CVERow
+	Offset int
+}
+
+// nextSlice returns the next bounded slice of rows to emit and advances the
+// cursor past them. It reports done=true once the cursor has consumed all rows,
+// at which point Process should call out.Finish().
+func (c *CursorState) nextSlice() (slice []CVERow, done bool) {
+	if c.Offset >= len(c.Rows) {
+		return nil, true
+	}
+	end := c.Offset + rowsPerTick
+	if end > len(c.Rows) {
+		end = len(c.Rows)
+	}
+	slice = c.Rows[c.Offset:end]
+	c.Offset = end
+	return slice, false
 }
 
 // ===========================================================================
@@ -160,10 +210,9 @@ type cveArgs struct {
 	APIKey  string `vgi:"name=api_key,default=,doc=NVD API key (raises the rate limit)"`
 }
 
-// cveState holds the at-most-one fetched row (gob-encodable) plus the emit flag.
+// cveState holds the at-most-one fetched row (gob-encodable) plus the cursor.
 type cveState struct {
-	emitState
-	Rows []CVERow
+	CursorState
 }
 
 // CVEFunction fetches one CVE by ID.
@@ -202,15 +251,14 @@ func (f *CVEFunction) NewState(params *vgi.ProcessParams) (*cveState, error) {
 	if row == nil {
 		return &cveState{}, nil
 	}
-	return &cveState{Rows: []CVERow{*row}}, nil
+	return &cveState{CursorState: CursorState{Rows: []CVERow{*row}}}, nil
 }
 
 func (f *CVEFunction) Process(_ context.Context, _ *vgi.ProcessParams, state *cveState, out *vgirpc.OutputCollector) error {
-	if state.Done {
+	r, done := state.nextSlice()
+	if done {
 		return out.Finish()
 	}
-	state.Done = true
-	r := state.Rows
 	n := int64(len(r))
 	batch := array.NewRecordBatch(cveSchema, []arrow.Array{
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
@@ -250,8 +298,7 @@ type cveSearchArgs struct {
 }
 
 type cveSearchState struct {
-	emitState
-	Rows []CVERow
+	CursorState
 }
 
 // CVESearchFunction runs a paginated keyword search.
@@ -287,15 +334,14 @@ func (f *CVESearchFunction) NewState(params *vgi.ProcessParams) (*cveSearchState
 	if err != nil {
 		return nil, err
 	}
-	return &cveSearchState{Rows: rows}, nil
+	return &cveSearchState{CursorState: CursorState{Rows: rows}}, nil
 }
 
 func (f *CVESearchFunction) Process(_ context.Context, _ *vgi.ProcessParams, state *cveSearchState, out *vgirpc.OutputCollector) error {
-	if state.Done {
+	r, done := state.nextSlice()
+	if done {
 		return out.Finish()
 	}
-	state.Done = true
-	r := state.Rows
 	n := int64(len(r))
 	batch := array.NewRecordBatch(cveSearchSchema, []arrow.Array{
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
@@ -330,8 +376,7 @@ type cpeCVEsArgs struct {
 }
 
 type cpeCVEsState struct {
-	emitState
-	Rows []CVERow
+	CursorState
 }
 
 // CPECVEsFunction lists CVEs for a CPE name.
@@ -367,15 +412,14 @@ func (f *CPECVEsFunction) NewState(params *vgi.ProcessParams) (*cpeCVEsState, er
 	if err != nil {
 		return nil, err
 	}
-	return &cpeCVEsState{Rows: rows}, nil
+	return &cpeCVEsState{CursorState: CursorState{Rows: rows}}, nil
 }
 
 func (f *CPECVEsFunction) Process(_ context.Context, _ *vgi.ProcessParams, state *cpeCVEsState, out *vgirpc.OutputCollector) error {
-	if state.Done {
+	r, done := state.nextSlice()
+	if done {
 		return out.Finish()
 	}
-	state.Done = true
-	r := state.Rows
 	n := int64(len(r))
 	batch := array.NewRecordBatch(cpeCVEsSchema, []arrow.Array{
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
