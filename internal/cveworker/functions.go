@@ -109,6 +109,17 @@ func (f *CVSSSeverityFunction) Metadata() vgi.FunctionMetadata {
 				Description: "Map a numeric CVSS base score to its qualitative band (returns 'CRITICAL').",
 			},
 		},
+		Tags: objectTags(
+			"CVSS Severity Band",
+			"Map a numeric CVSS v3.1 base score in the range 0.0-10.0 to its qualitative severity "+
+				"band: NONE, LOW, MEDIUM, HIGH, or CRITICAL. Offline, deterministic, no network. "+
+				"Use to bucket and triage vulnerabilities by severity.",
+			"Map a CVSS base score (0.0-10.0) to its severity band, e.g. `cvss_severity(9.8)` -> "+
+				"`'CRITICAL'`.",
+			"cvss, severity, severity band, score to severity, qualitative rating, none, low, "+
+				"medium, high, critical, triage, vulnerability",
+			"functions.go",
+		),
 	}
 }
 
@@ -155,6 +166,18 @@ func (f *CVSSBaseScoreFunction) Metadata() vgi.FunctionMetadata {
 				Description: "Compute the CVSS v3.1 base score for the Log4Shell vector (returns 9.8).",
 			},
 		},
+		Tags: objectTags(
+			"CVSS Base Score Calculator",
+			"Compute the CVSS v3.1 base score (0.0-10.0) from a CVSS vector string such as "+
+				"'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'. Implements the official base "+
+				"equation (impact, exploitability, scope, spec roundup) entirely offline. A "+
+				"malformed vector raises an error.",
+			"Compute the CVSS v3.1 base score from a vector string, e.g. the Log4Shell vector -> "+
+				"`9.8`.",
+			"cvss, base score, cvss v3.1, vector string, cvss vector, scoring, calculator, "+
+				"exploitability, impact, scope, vulnerability scoring",
+			"functions.go",
+		),
 	}
 }
 
@@ -245,18 +268,27 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 				Description: "Fetch the Log4Shell CVE record (description, CVSS score/severity/vector, dates, CWE).",
 			},
 		},
-		Tags: map[string]string{
-			"vgi.columns_md": "| column | type | description |\n" +
-				"|---|---|---|\n" +
-				"| `id` | VARCHAR | The CVE identifier, e.g. `CVE-2021-44228`. |\n" +
-				"| `description` | VARCHAR | English description of the vulnerability. |\n" +
-				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
-				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n" +
-				"| `cvss_vector` | VARCHAR | The CVSS vector string. |\n" +
-				"| `published` | VARCHAR | Publication timestamp (ISO 8601). |\n" +
-				"| `last_modified` | VARCHAR | Last-modified timestamp (ISO 8601). |\n" +
+		Tags: withColumnsMD(
+			"CVE Lookup by ID",
+			"Fetch a single CVE record by its identifier (e.g. CVE-2021-44228) from the NVD 2.0 "+
+				"API, returning its description, CVSS base score, qualitative severity, CVSS "+
+				"vector, published and last-modified timestamps, and associated CWE. Returns no "+
+				"rows for an unknown CVE.",
+			"Fetch one CVE record by ID from the NVD 2.0 API, e.g. `cve('CVE-2021-44228')`.",
+			"cve, cve lookup, cve by id, nvd, vulnerability, advisory, cvss, cwe, log4shell, "+
+				"national vulnerability database",
+			"functions.go",
+			"| column | type | description |\n"+
+				"|---|---|---|\n"+
+				"| `id` | VARCHAR | The CVE identifier, e.g. `CVE-2021-44228`. |\n"+
+				"| `description` | VARCHAR | English description of the vulnerability. |\n"+
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n"+
+				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n"+
+				"| `cvss_vector` | VARCHAR | The CVSS vector string. |\n"+
+				"| `published` | VARCHAR | Publication timestamp (ISO 8601). |\n"+
+				"| `last_modified` | VARCHAR | Last-modified timestamp (ISO 8601). |\n"+
 				"| `cwe` | VARCHAR | Associated CWE identifier(s). |",
-		},
+		),
 	}
 }
 
@@ -349,15 +381,23 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 				Description: "Keyword-search CVE descriptions for 'log4j', highest CVSS score first.",
 			},
 		},
-		Tags: map[string]string{
-			"vgi.columns_md": "| column | type | description |\n" +
-				"|---|---|---|\n" +
-				"| `id` | VARCHAR | The CVE identifier. |\n" +
-				"| `description` | VARCHAR | English description of the vulnerability. |\n" +
-				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
-				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n" +
+		Tags: withColumnsMD(
+			"CVE Keyword Search",
+			"Keyword-search CVE descriptions through the NVD 2.0 API and return the matching CVEs "+
+				"with their description, CVSS base score, qualitative severity, and publication "+
+				"date. Results are paginated server-side and bounded to 100 rows.",
+			"Keyword-search CVE descriptions via the NVD 2.0 API, e.g. `cve_search('log4j')`.",
+			"cve search, keyword search, search vulnerabilities, nvd, full text, advisory lookup, "+
+				"cvss, find cves",
+			"functions.go",
+			"| column | type | description |\n"+
+				"|---|---|---|\n"+
+				"| `id` | VARCHAR | The CVE identifier. |\n"+
+				"| `description` | VARCHAR | English description of the vulnerability. |\n"+
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n"+
+				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n"+
 				"| `published` | VARCHAR | Publication timestamp (ISO 8601). |",
-		},
+		),
 	}
 }
 
@@ -442,13 +482,23 @@ func (f *CPECVEsFunction) Metadata() vgi.FunctionMetadata {
 				Description: "List the CVEs affecting a specific CPE 2.3 product (Apache Log4j 2.14.1).",
 			},
 		},
-		Tags: map[string]string{
-			"vgi.columns_md": "| column | type | description |\n" +
-				"|---|---|---|\n" +
-				"| `cve_id` | VARCHAR | The CVE identifier affecting the CPE. |\n" +
-				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
+		Tags: withColumnsMD(
+			"CVEs Affecting a CPE",
+			"List the CVEs that affect a given CPE 2.3 product name (e.g. "+
+				"cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*) using the NVD 2.0 API, returning each "+
+				"CVE identifier with its CVSS base score and qualitative severity. Results are "+
+				"paginated server-side and bounded.",
+			"List CVEs affecting a CPE 2.3 product name via the NVD 2.0 API, e.g. "+
+				"`cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*')`.",
+			"cpe, cpe cves, product vulnerabilities, affected products, nvd, cpe 2.3, vulnerable "+
+				"versions, cvss, vulnerability inventory",
+			"functions.go",
+			"| column | type | description |\n"+
+				"|---|---|---|\n"+
+				"| `cve_id` | VARCHAR | The CVE identifier affecting the CPE. |\n"+
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n"+
 				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |",
-		},
+		),
 	}
 }
 
