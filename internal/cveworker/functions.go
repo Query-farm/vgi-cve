@@ -103,6 +103,12 @@ func (f *CVSSSeverityFunction) Metadata() vgi.FunctionMetadata {
 		Stability:   vgi.StabilityConsistent,
 		ReturnType:  arrow.BinaryTypes.String,
 		Categories:  []string{"cve", "cvss"},
+		Examples: []vgi.CatalogExample{
+			{
+				SQL:         "SELECT cve.main.cvss_severity(9.8);",
+				Description: "Map a numeric CVSS base score to its qualitative band (returns 'CRITICAL').",
+			},
+		},
 	}
 }
 
@@ -143,6 +149,12 @@ func (f *CVSSBaseScoreFunction) Metadata() vgi.FunctionMetadata {
 		Stability:   vgi.StabilityConsistent,
 		ReturnType:  arrow.PrimitiveTypes.Float64,
 		Categories:  []string{"cve", "cvss"},
+		Examples: []vgi.CatalogExample{
+			{
+				SQL:         "SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');",
+				Description: "Compute the CVSS v3.1 base score for the Log4Shell vector (returns 9.8).",
+			},
+		},
 	}
 }
 
@@ -227,6 +239,24 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 		Description: "Fetch a single CVE record by ID from the NVD 2.0 API",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd"},
+		Examples: []vgi.CatalogExample{
+			{
+				SQL:         "SELECT * FROM cve.main.cve('CVE-2021-44228');",
+				Description: "Fetch the Log4Shell CVE record (description, CVSS score/severity/vector, dates, CWE).",
+			},
+		},
+		Tags: map[string]string{
+			"vgi.columns_md": "| column | type | description |\n" +
+				"|---|---|---|\n" +
+				"| `id` | VARCHAR | The CVE identifier, e.g. `CVE-2021-44228`. |\n" +
+				"| `description` | VARCHAR | English description of the vulnerability. |\n" +
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
+				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n" +
+				"| `cvss_vector` | VARCHAR | The CVSS vector string. |\n" +
+				"| `published` | VARCHAR | Publication timestamp (ISO 8601). |\n" +
+				"| `last_modified` | VARCHAR | Last-modified timestamp (ISO 8601). |\n" +
+				"| `cwe` | VARCHAR | Associated CWE identifier(s). |",
+		},
 	}
 }
 
@@ -313,6 +343,21 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 		Description: "Keyword-search the NVD 2.0 API (paginated, bounded to 100 results)",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd"},
+		Examples: []vgi.CatalogExample{
+			{
+				SQL:         "SELECT * FROM cve.main.cve_search('log4j') ORDER BY cvss_score DESC;",
+				Description: "Keyword-search CVE descriptions for 'log4j', highest CVSS score first.",
+			},
+		},
+		Tags: map[string]string{
+			"vgi.columns_md": "| column | type | description |\n" +
+				"|---|---|---|\n" +
+				"| `id` | VARCHAR | The CVE identifier. |\n" +
+				"| `description` | VARCHAR | English description of the vulnerability. |\n" +
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
+				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |\n" +
+				"| `published` | VARCHAR | Publication timestamp (ISO 8601). |",
+		},
 	}
 }
 
@@ -391,6 +436,19 @@ func (f *CPECVEsFunction) Metadata() vgi.FunctionMetadata {
 		Description: "List CVEs affecting a CPE name from the NVD 2.0 API (paginated, bounded)",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd", "cpe"},
+		Examples: []vgi.CatalogExample{
+			{
+				SQL:         "SELECT * FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*');",
+				Description: "List the CVEs affecting a specific CPE 2.3 product (Apache Log4j 2.14.1).",
+			},
+		},
+		Tags: map[string]string{
+			"vgi.columns_md": "| column | type | description |\n" +
+				"|---|---|---|\n" +
+				"| `cve_id` | VARCHAR | The CVE identifier affecting the CPE. |\n" +
+				"| `cvss_score` | DOUBLE | CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet. |\n" +
+				"| `cvss_severity` | VARCHAR | Qualitative band: NONE/LOW/MEDIUM/HIGH/CRITICAL. |",
+		},
 	}
 }
 
