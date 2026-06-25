@@ -116,9 +116,7 @@ func (f *CVSSSeverityFunction) Metadata() vgi.FunctionMetadata {
 				"Use to bucket and triage vulnerabilities by severity.",
 			"Map a CVSS base score (0.0-10.0) to its severity band, e.g. `cvss_severity(9.8)` -> "+
 				"`'CRITICAL'`.",
-			"cvss, severity, severity band, score to severity, qualitative rating, none, low, "+
-				"medium, high, critical, triage, vulnerability",
-			"functions.go",
+			`["cvss","severity","severity band","score to severity","qualitative rating","none","low","medium","high","critical","triage","vulnerability"]`,
 		),
 	}
 }
@@ -174,9 +172,7 @@ func (f *CVSSBaseScoreFunction) Metadata() vgi.FunctionMetadata {
 				"malformed vector raises an error.",
 			"Compute the CVSS v3.1 base score from a vector string, e.g. the Log4Shell vector -> "+
 				"`9.8`.",
-			"cvss, base score, cvss v3.1, vector string, cvss vector, scoring, calculator, "+
-				"exploitability, impact, scope, vulnerability scoring",
-			"functions.go",
+			`["cvss","base score","cvss v3.1","vector string","cvss vector","scoring","calculator","exploitability","impact","scope","vulnerability scoring"]`,
 		),
 	}
 }
@@ -275,9 +271,7 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 				"vector, published and last-modified timestamps, and associated CWE. Returns no "+
 				"rows for an unknown CVE.",
 			"Fetch one CVE record by ID from the NVD 2.0 API, e.g. `cve('CVE-2021-44228')`.",
-			"cve, cve lookup, cve by id, nvd, vulnerability, advisory, cvss, cwe, log4shell, "+
-				"national vulnerability database",
-			"functions.go",
+			`["cve","cve lookup","cve by id","nvd","vulnerability","advisory","cvss","cwe","log4shell","national vulnerability database"]`,
 			"| column | type | description |\n"+
 				"|---|---|---|\n"+
 				"| `id` | VARCHAR | The CVE identifier, e.g. `CVE-2021-44228`. |\n"+
@@ -387,9 +381,7 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 				"with their description, CVSS base score, qualitative severity, and publication "+
 				"date. Results are paginated server-side and bounded to 100 rows.",
 			"Keyword-search CVE descriptions via the NVD 2.0 API, e.g. `cve_search('log4j')`.",
-			"cve search, keyword search, search vulnerabilities, nvd, full text, advisory lookup, "+
-				"cvss, find cves",
-			"functions.go",
+			`["cve search","keyword search","search vulnerabilities","nvd","full text","advisory lookup","cvss","find cves"]`,
 			"| column | type | description |\n"+
 				"|---|---|---|\n"+
 				"| `id` | VARCHAR | The CVE identifier. |\n"+
@@ -490,9 +482,7 @@ func (f *CPECVEsFunction) Metadata() vgi.FunctionMetadata {
 				"paginated server-side and bounded.",
 			"List CVEs affecting a CPE 2.3 product name via the NVD 2.0 API, e.g. "+
 				"`cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*')`.",
-			"cpe, cpe cves, product vulnerabilities, affected products, nvd, cpe 2.3, vulnerable "+
-				"versions, cvss, vulnerability inventory",
-			"functions.go",
+			`["cpe","cpe cves","product vulnerabilities","affected products","nvd","cpe 2.3","vulnerable versions","cvss","vulnerability inventory"]`,
 			"| column | type | description |\n"+
 				"|---|---|---|\n"+
 				"| `cve_id` | VARCHAR | The CVE identifier affecting the CPE. |\n"+

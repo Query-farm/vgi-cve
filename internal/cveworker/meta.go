@@ -3,43 +3,31 @@
 package cveworker
 
 // Shared helpers for the per-object discovery/description metadata that the
-// vgi-lint strict profile (0.23.0) expects on EVERY function and table.
+// vgi-lint strict profile expects on EVERY function and table.
 //
 // Each function/table surfaces these in its FunctionMetadata.Tags:
-//   - vgi.title       (VGI124) — human-friendly display name
-//   - vgi.doc_llm     (VGI112) — Markdown narrative aimed at LLMs/agents
-//   - vgi.doc_md      (VGI113) — Markdown narrative for human docs
-//   - vgi.keywords    (VGI126) — comma-separated search terms/synonyms
-//   - vgi.source_url  (VGI128) — link to the implementing source file
+//   - vgi.title     (VGI124) — human-friendly display name
+//   - vgi.doc_llm   (VGI112) — Markdown narrative aimed at LLMs/agents
+//   - vgi.doc_md    (VGI113) — Markdown narrative for human docs
+//   - vgi.keywords  (VGI126/VGI138) — JSON array of search terms/synonyms
 //
-// sourceURL(file) builds the canonical GitHub blob URL for a source file so
-// every object points at exactly where it is implemented.
+// Per-object vgi.source_url is intentionally NOT set (VGI139): source_url
+// belongs on the catalog object only; the per-object copies are redundant.
 
-// sourceBase is the GitHub blob URL prefix for source files in this repo
-// (pinned to main).
-const sourceBase = "https://github.com/Query-farm/vgi-cve/blob/main/internal/cveworker"
-
-// sourceURL builds the vgi.source_url for a file under internal/cveworker,
-// e.g. sourceURL("functions.go").
-func sourceURL(relativePath string) string {
-	return sourceBase + "/" + relativePath
-}
-
-// objectTags builds the five standard per-object discovery/description tags.
-// relativePath is the implementing file relative to internal/cveworker.
-func objectTags(title, descriptionLLM, descriptionMD, keywords, relativePath string) map[string]string {
+// objectTags builds the four standard per-object discovery/description tags.
+// keywords must be a JSON array of strings (e.g. `["a","b"]`) per VGI138.
+func objectTags(title, descriptionLLM, descriptionMD, keywords string) map[string]string {
 	return map[string]string{
-		"vgi.title":      title,
-		"vgi.doc_llm":    descriptionLLM,
-		"vgi.doc_md":     descriptionMD,
-		"vgi.keywords":   keywords,
-		"vgi.source_url": sourceURL(relativePath),
+		"vgi.title":    title,
+		"vgi.doc_llm":  descriptionLLM,
+		"vgi.doc_md":   descriptionMD,
+		"vgi.keywords": keywords,
 	}
 }
 
 // withColumnsMD returns objectTags plus a vgi.result_columns_md table-shape doc.
-func withColumnsMD(title, descriptionLLM, descriptionMD, keywords, relativePath, columnsMD string) map[string]string {
-	t := objectTags(title, descriptionLLM, descriptionMD, keywords, relativePath)
+func withColumnsMD(title, descriptionLLM, descriptionMD, keywords, columnsMD string) map[string]string {
+	t := objectTags(title, descriptionLLM, descriptionMD, keywords)
 	t["vgi.result_columns_md"] = columnsMD
 	return t
 }
