@@ -41,6 +41,30 @@ func Severity(score float64) string {
 	}
 }
 
+// SeverityBand is one CVSS v3.1 qualitative severity band and the inclusive
+// base-score range that Severity() maps into it.
+type SeverityBand struct {
+	// Severity is the qualitative band name (NONE/LOW/MEDIUM/HIGH/CRITICAL).
+	Severity string
+	// MinScore and MaxScore bound the inclusive base-score range for the band.
+	MinScore float64
+	MaxScore float64
+}
+
+// SeverityBands returns the five CVSS v3.1 qualitative severity bands in
+// ascending order, with the inclusive base-score range each covers. It is the
+// single source the cvss_severity_bands discovery table reads, so that table and
+// Severity()'s thresholds (above) cannot drift apart.
+func SeverityBands() []SeverityBand {
+	return []SeverityBand{
+		{"NONE", 0.0, 0.0},
+		{"LOW", 0.1, 3.9},
+		{"MEDIUM", 4.0, 6.9},
+		{"HIGH", 7.0, 8.9},
+		{"CRITICAL", 9.0, 10.0},
+	}
+}
+
 // Metric weight tables from the CVSS v3.1 specification (section 7.4).
 
 var attackVectorWeights = map[string]float64{
