@@ -2,7 +2,11 @@
 
 package cveworker
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/Query-farm/vgi-go/vgi"
+)
 
 // Shared helpers for the per-object discovery/description metadata that the
 // vgi-lint strict profile expects on EVERY function and table.
@@ -54,4 +58,32 @@ func withResultSchema(title, descriptionLLM, descriptionMD, keywords, category s
 	}
 	t["vgi.result_columns_schema"] = string(b)
 	return t
+}
+
+// withExamples attaches a vgi.example_queries tag built from the function's
+// native examples to the given tag map, returning the map for chaining.
+//
+// VGI515 requires every schema/function example to carry a non-empty
+// description. The native duckdb_functions().examples column that the VGI
+// extension populates from FunctionMetadata.Examples surfaces the SQL string
+// only — the per-example description is dropped — so vgi-lint cannot see the
+// descriptions set on Examples. The vgi.example_queries tag is the carrier that
+// does preserve them; we build it from the SAME CatalogExample values so the
+// two never drift, and the linter dedupes them by SQL.
+func withExamples(tags map[string]string, examples []vgi.CatalogExample) map[string]string {
+	type describedExample struct {
+		Description string `json:"description"`
+		SQL         string `json:"sql"`
+	}
+	out := make([]describedExample, len(examples))
+	for i, e := range examples {
+		out[i] = describedExample{Description: e.Description, SQL: e.SQL}
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		// The input is derived from static literals; a marshal error is a bug.
+		panic(err)
+	}
+	tags["vgi.example_queries"] = string(b)
+	return tags
 }

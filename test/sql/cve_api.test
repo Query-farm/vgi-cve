@@ -59,6 +59,14 @@ WHERE cvss_score IS NULL;
 ----
 1
 
+# cpe_cves surfaces the description and publication date alongside the scoring.
+query TTR
+SELECT cve_id, description, cvss_score
+FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*', base_url := '${VGI_CVE_TEST_URL}')
+WHERE cve_id = 'CVE-2021-44228';
+----
+CVE-2021-44228	Apache Log4j2 2.0-beta9 through 2.15.0 JNDI features used in configuration, log messages, and parameters do not protect against attacker controlled LDAP and other JNDI related endpoints.	10.0
+
 # ---- unknown CVE -> clean error (mock returns 404) ----
 
 statement error

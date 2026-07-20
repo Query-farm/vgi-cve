@@ -98,18 +98,19 @@ type CVSSSeverityFunction struct{}
 func (f *CVSSSeverityFunction) Name() string { return "cvss_severity" }
 
 func (f *CVSSSeverityFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL:         "SELECT cve.main.cvss_severity(9.8);",
+			Description: "Map a numeric CVSS base score to its qualitative band (returns 'CRITICAL').",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "Map a CVSS base score (0.0-10.0) to NONE/LOW/MEDIUM/HIGH/CRITICAL",
 		Stability:   vgi.StabilityConsistent,
 		ReturnType:  arrow.BinaryTypes.String,
 		Categories:  []string{"cve", "cvss"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL:         "SELECT cve.main.cvss_severity(9.8);",
-				Description: "Map a numeric CVSS base score to its qualitative band (returns 'CRITICAL').",
-			},
-		},
-		Tags: objectTags(
+		Examples:    examples,
+		Tags: withExamples(objectTags(
 			"CVSS Severity Band",
 			"Map a numeric CVSS v3.1 base score in the range 0.0-10.0 to its qualitative severity "+
 				"band: NONE, LOW, MEDIUM, HIGH, or CRITICAL. Offline, deterministic, no network. "+
@@ -118,7 +119,7 @@ func (f *CVSSSeverityFunction) Metadata() vgi.FunctionMetadata {
 				"`'CRITICAL'`.",
 			`["cvss","severity","severity band","score to severity","qualitative rating","none","low","medium","high","critical","triage","vulnerability"]`,
 			"CVSS Scoring",
-		),
+		), examples),
 	}
 }
 
@@ -154,18 +155,19 @@ type CVSSBaseScoreFunction struct{}
 func (f *CVSSBaseScoreFunction) Name() string { return "cvss_base_score" }
 
 func (f *CVSSBaseScoreFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL:         "SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');",
+			Description: "Compute the CVSS v3.1 base score for the Log4Shell vector (returns 9.8).",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "Compute the CVSS v3.1 base score from a vector string",
 		Stability:   vgi.StabilityConsistent,
 		ReturnType:  arrow.PrimitiveTypes.Float64,
 		Categories:  []string{"cve", "cvss"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL:         "SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');",
-				Description: "Compute the CVSS v3.1 base score for the Log4Shell vector (returns 9.8).",
-			},
-		},
-		Tags: objectTags(
+		Examples:    examples,
+		Tags: withExamples(objectTags(
 			"CVSS Base Score Calculator",
 			"Compute the CVSS v3.1 base score (0.0-10.0) from a CVSS vector string such as "+
 				"'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'. Implements the official base "+
@@ -175,7 +177,7 @@ func (f *CVSSBaseScoreFunction) Metadata() vgi.FunctionMetadata {
 				"`9.8`.",
 			`["cvss","base score","cvss v3.1","vector string","cvss vector","scoring","calculator","exploitability","impact","scope","vulnerability scoring"]`,
 			"CVSS Scoring",
-		),
+		), examples),
 	}
 }
 
@@ -256,18 +258,19 @@ var _ vgi.TypedTableFunc[cveState] = (*CVEFunction)(nil)
 func (f *CVEFunction) Name() string { return "cve" }
 
 func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL: "SELECT id, cvss_score, cvss_severity, cwe " +
+				"FROM cve.main.cve('CVE-2021-44228') WHERE cvss_score >= 9.0;",
+			Description: "Look up the Log4Shell CVE and keep only its critical-severity scoring and CWE.",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "Fetch a single CVE record by ID from the NVD 2.0 API",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL: "SELECT id, cvss_score, cvss_severity, cwe " +
-					"FROM cve.main.cve('CVE-2021-44228') WHERE cvss_score >= 9.0;",
-				Description: "Look up the Log4Shell CVE and keep only its critical-severity scoring and CWE.",
-			},
-		},
-		Tags: withResultSchema(
+		Examples:    examples,
+		Tags: withExamples(withResultSchema(
 			"CVE Lookup by ID",
 			"Fetch a single CVE record by its identifier (e.g. CVE-2021-44228) from the NVD 2.0 "+
 				"API, returning its description, CVSS base score, qualitative severity, CVSS "+
@@ -286,7 +289,7 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 				{"last_modified", "VARCHAR", "Last-modified timestamp (ISO 8601)."},
 				{"cwe", "VARCHAR", "Associated CWE identifier(s)."},
 			},
-		),
+		), examples),
 	}
 }
 
@@ -369,18 +372,19 @@ var _ vgi.TypedTableFunc[cveSearchState] = (*CVESearchFunction)(nil)
 func (f *CVESearchFunction) Name() string { return "cve_search" }
 
 func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL: "SELECT id, cvss_score, cvss_severity FROM cve.main.cve_search('log4j') " +
+				"WHERE cvss_score IS NOT NULL ORDER BY cvss_score DESC;",
+			Description: "Rank the scored 'log4j' CVEs by CVSS base score, most severe first.",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "Keyword-search the NVD 2.0 API (paginated, bounded to 100 results)",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL: "SELECT id, cvss_score, cvss_severity FROM cve.main.cve_search('log4j') " +
-					"WHERE cvss_score IS NOT NULL ORDER BY cvss_score DESC;",
-				Description: "Rank the scored 'log4j' CVEs by CVSS base score, most severe first.",
-			},
-		},
-		Tags: withResultSchema(
+		Examples:    examples,
+		Tags: withExamples(withResultSchema(
 			"CVE Keyword Search",
 			"Keyword-search CVE descriptions through the NVD 2.0 API and return the matching CVEs "+
 				"with their description, CVSS base score, qualitative severity, and publication "+
@@ -395,7 +399,7 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL."},
 				{"published", "VARCHAR", "Publication timestamp (ISO 8601)."},
 			},
-		),
+		), examples),
 	}
 }
 
@@ -448,8 +452,10 @@ func NewCVESearchFunction() vgi.TableFunction {
 
 var cpeCVEsSchema = arrow.NewSchema([]arrow.Field{
 	{Name: "cve_id", Type: arrow.BinaryTypes.String},
+	{Name: "description", Type: arrow.BinaryTypes.String},
 	{Name: "cvss_score", Type: arrow.PrimitiveTypes.Float64, Nullable: true},
 	{Name: "cvss_severity", Type: arrow.BinaryTypes.String},
+	{Name: "published", Type: arrow.BinaryTypes.String},
 }, nil)
 
 type cpeCVEsArgs struct {
@@ -470,34 +476,37 @@ var _ vgi.TypedTableFunc[cpeCVEsState] = (*CPECVEsFunction)(nil)
 func (f *CPECVEsFunction) Name() string { return "cpe_cves" }
 
 func (f *CPECVEsFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL: "SELECT cve_id, description, cvss_score, cvss_severity " +
+				"FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*') " +
+				"WHERE cvss_severity IN ('HIGH', 'CRITICAL') ORDER BY cvss_score DESC;",
+			Description: "List only the high/critical CVEs affecting Apache Log4j 2.14.1, worst first.",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "List CVEs affecting a CPE name from the NVD 2.0 API (paginated, bounded)",
 		Stability:   vgi.StabilityVolatile,
 		Categories:  []string{"cve", "nvd", "cpe"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL: "SELECT cve_id, cvss_score, cvss_severity " +
-					"FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*') " +
-					"WHERE cvss_severity IN ('HIGH', 'CRITICAL') ORDER BY cvss_score DESC;",
-				Description: "List only the high/critical CVEs affecting Apache Log4j 2.14.1, worst first.",
-			},
-		},
-		Tags: withResultSchema(
+		Examples:    examples,
+		Tags: withExamples(withResultSchema(
 			"CVEs Affecting a CPE",
 			"List the CVEs that affect a given CPE 2.3 product name (e.g. "+
 				"cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*) using the NVD 2.0 API, returning each "+
-				"CVE identifier with its CVSS base score and qualitative severity. Results are "+
-				"paginated server-side and bounded.",
+				"CVE identifier with its description, CVSS base score, qualitative severity, and "+
+				"publication date. Results are paginated server-side and bounded.",
 			"List CVEs affecting a CPE 2.3 product name via the NVD 2.0 API, e.g. "+
 				"`cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*')`.",
 			`["cpe","cpe cves","product vulnerabilities","affected products","nvd","cpe 2.3","vulnerable versions","cvss","vulnerability inventory"]`,
 			"NVD Lookup",
 			[]resultColumn{
 				{"cve_id", "VARCHAR", "The CVE identifier affecting the CPE."},
+				{"description", "VARCHAR", "English description of the vulnerability."},
 				{"cvss_score", "DOUBLE", "CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet."},
 				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL."},
+				{"published", "VARCHAR", "Publication timestamp (ISO 8601)."},
 			},
-		),
+		), examples),
 	}
 }
 
@@ -530,8 +539,10 @@ func (f *CPECVEsFunction) Process(_ context.Context, _ *vgi.ProcessParams, state
 	n := int64(len(r))
 	batch := array.NewRecordBatch(cpeCVEsSchema, []arrow.Array{
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
+		vgi.BuildStringArray(n, func(i int64) string { return r[i].Description }),
 		buildNullableScore(r),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].SeverityStr }),
+		vgi.BuildStringArray(n, func(i int64) string { return r[i].Published }),
 	}, n)
 	defer batch.Release()
 	return out.Emit(batch)
@@ -579,18 +590,19 @@ var _ vgi.TypedTableFunc[bandsState] = (*SeverityBandsFunction)(nil)
 func (f *SeverityBandsFunction) Name() string { return "cvss_severity_bands" }
 
 func (f *SeverityBandsFunction) Metadata() vgi.FunctionMetadata {
+	examples := []vgi.CatalogExample{
+		{
+			SQL: "SELECT severity, min_score, max_score FROM cve.main.cvss_severity_bands() " +
+				"WHERE min_score >= 7.0 ORDER BY min_score;",
+			Description: "List the high-and-above CVSS severity bands with their score ranges.",
+		},
+	}
 	return vgi.FunctionMetadata{
 		Description: "The five CVSS v3.1 qualitative severity bands and their base-score ranges",
 		Stability:   vgi.StabilityConsistent,
 		Categories:  []string{"cve", "cvss"},
-		Examples: []vgi.CatalogExample{
-			{
-				SQL: "SELECT severity, min_score, max_score FROM cve.main.cvss_severity_bands() " +
-					"WHERE min_score >= 7.0 ORDER BY min_score;",
-				Description: "List the high-and-above CVSS severity bands with their score ranges.",
-			},
-		},
-		Tags: withResultSchema(
+		Examples:    examples,
+		Tags: withExamples(withResultSchema(
 			"CVSS v3.1 Severity Rating Bands",
 			"Browsable, offline reference table of the five CVSS v3.1 qualitative severity bands "+
 				"(NONE, LOW, MEDIUM, HIGH, CRITICAL) and the inclusive base-score range each covers. "+
@@ -601,7 +613,7 @@ func (f *SeverityBandsFunction) Metadata() vgi.FunctionMetadata {
 			`["cvss","severity band","severity bands","score range","none","low","medium","high","critical","cvss v3.1","reference"]`,
 			"CVSS Scoring",
 			SeverityBandsColumns,
-		),
+		), examples),
 	}
 }
 
