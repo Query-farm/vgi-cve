@@ -45,6 +45,16 @@ case "$TRANSPORT" in
   *) echo "ERROR: unknown TRANSPORT='$TRANSPORT' (expected subprocess|http|unix)" >&2; exit 2 ;;
 esac
 
+# Which .test files to run (relative to the staged dir). Defaults to the whole
+# suite; the Docker image_test narrows this to the offline scalars.
+TEST_PATTERN="${TEST_PATTERN:-test/sql/*}"
+
+# SKIP_MOCK=1 skips building + starting the mock NVD server. The Docker
+# image_test sets this because it runs only the offline CVSS suite (which makes
+# no NVD call) against a containerized worker, where a host-side mock at
+# 127.0.0.1 would be unreachable from inside the container anyway.
+SKIP_MOCK="${SKIP_MOCK:-}"
+
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 STAGE="${STAGE:-$(mktemp -d)}"
@@ -75,27 +85,31 @@ trap cleanup EXIT
 # "PORT:<n>" on stdout (see cmd/mockserver/main.go). We capture that, export
 # VGI_CVE_TEST_URL (the NVD 2.0 CVE endpoint path the worker expects). The
 # mock is required for every transport — the worker still makes the HTTP call.
-MOCK_BIN="$STAGE/mockserver"
-echo "Building mock NVD server ..."
-( cd "$REPO" && go build -o "$MOCK_BIN" ./cmd/mockserver )
+if [ "$SKIP_MOCK" = "1" ]; then
+  echo "SKIP_MOCK=1: not starting the mock NVD server (offline-only suite)."
+else
+  MOCK_BIN="$STAGE/mockserver"
+  echo "Building mock NVD server ..."
+  ( cd "$REPO" && go build -o "$MOCK_BIN" ./cmd/mockserver )
 
-MOCK_PORT_FILE="$(mktemp)"
-"$MOCK_BIN" --addr 127.0.0.1:0 >"$MOCK_PORT_FILE" 2>/dev/null &
-MOCK_PID=$!
+  MOCK_PORT_FILE="$(mktemp)"
+  "$MOCK_BIN" --addr 127.0.0.1:0 >"$MOCK_PORT_FILE" 2>/dev/null &
+  MOCK_PID=$!
 
-PORT=""
-for _ in $(seq 1 30); do
-  PORT="$(sed -n 's/^PORT:\([0-9][0-9]*\)$/\1/p' "$MOCK_PORT_FILE" 2>/dev/null | head -1)"
-  [ -n "$PORT" ] && break
-  sleep 0.2
-done
-if [ -z "$PORT" ]; then
-  echo "ERROR: mock server did not report a port" >&2
-  exit 1
+  PORT=""
+  for _ in $(seq 1 30); do
+    PORT="$(sed -n 's/^PORT:\([0-9][0-9]*\)$/\1/p' "$MOCK_PORT_FILE" 2>/dev/null | head -1)"
+    [ -n "$PORT" ] && break
+    sleep 0.2
+  done
+  if [ -z "$PORT" ]; then
+    echo "ERROR: mock server did not report a port" >&2
+    exit 1
+  fi
+  rm -f "$MOCK_PORT_FILE"
+  export VGI_CVE_TEST_URL="http://127.0.0.1:$PORT/rest/json/cves/2.0"
+  echo "Mock NVD server listening on $VGI_CVE_TEST_URL (pid $MOCK_PID)"
 fi
-rm -f "$MOCK_PORT_FILE"
-export VGI_CVE_TEST_URL="http://127.0.0.1:$PORT/rest/json/cves/2.0"
-echo "Mock NVD server listening on $VGI_CVE_TEST_URL (pid $MOCK_PID)"
 
 # --- Per-transport: resolve VGI_CVE_WORKER (the ATTACH LOCATION) -------------
 # subprocess keeps the binary path (extension spawns stdio). http/unix start the
@@ -106,6 +120,15 @@ case "$TRANSPORT" in
     ;;
 
   http)
+    # Honor a pre-launched HTTP worker (e.g. a running container in the Docker
+    # image_test): if VGI_CVE_WORKER already points at an http(s):// URL, use it
+    # as the ATTACH LOCATION and skip spawning a local binary. The awk
+    # preprocessor still injects httpfs below because TRANSPORT=http.
+    case "$VGI_CVE_WORKER" in
+      http://*|https://*)
+        echo "Transport: http — using pre-launched worker at $VGI_CVE_WORKER"
+        ;;
+      *)
     # Start the worker in --http mode; it prints "PORT:<n>" once listening.
     WORKER_PORT_FILE="$(mktemp)"
     echo "Transport: http — starting '$WORKER_BIN --http' ..."
@@ -131,6 +154,8 @@ case "$TRANSPORT" in
     # 404 — which the runner silently skips as an error "matching 'HTTP'".
     export VGI_CVE_WORKER="http://127.0.0.1:$WPORT"
     echo "HTTP worker listening on $VGI_CVE_WORKER (pid $WORKER_PID)"
+        ;;
+    esac
     ;;
 
   unix)
@@ -222,10 +247,10 @@ rm -f "$STAGE/test/_warm.test"
 # "All tests were skipped" and the job would go GREEN having run nothing — a
 # fake pass. We detect that and fail explicitly. A real run prints
 # "All tests passed (N assertions ...)".
-echo "Running suite (transport: $TRANSPORT, worker: $VGI_CVE_WORKER) ..."
+echo "Running suite (transport: $TRANSPORT, pattern: $TEST_PATTERN, worker: $VGI_CVE_WORKER) ..."
 RUN_LOG="$STAGE/run.log"
 set +e
-"$HAYBARN_UNITTEST" "test/sql/*" 2>&1 | tee "$RUN_LOG"
+"$HAYBARN_UNITTEST" "$TEST_PATTERN" 2>&1 | tee "$RUN_LOG"
 RUN_RC="${PIPESTATUS[0]}"
 set -e
 

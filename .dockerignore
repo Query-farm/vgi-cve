@@ -1,0 +1,31 @@
+# Keep the build context small: the Dockerfile needs the Go module files, the
+# Go sources (cmd/ + internal/), and docker-entrypoint.sh. Everything below is
+# built inside the image, test-only, or irrelevant.
+
+# Built binaries (also gitignored) — never ship host builds into the context.
+/vgi-cve-worker
+/mockserver
+/*.test
+*.out
+coverage.out
+
+# VCS / CI / editor / OS cruft
+.git
+.github
+.gitignore
+.golangci.yml
+.dockerignore
+docs
+duckdb_unittest_tempdir
+.DS_Store
+/.tmpbin/
+.vgi-*-cache.json
+
+# The image builds only the worker; the mock NVD server and the SQL E2E harness
+# are test-only and not needed in the image.
+ci
+test
+Makefile
+README.md
+CLAUDE.md
+LICENSE
