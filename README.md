@@ -91,7 +91,7 @@ FROM cve.cve('CVE-2021-44228', api_key := 'your-nvd-key');
 
 ## Build
 
-Requires Go 1.25+.
+Requires Go 1.26+.
 
 ```sh
 make build        # builds ./vgi-cve-worker and ./mockserver
