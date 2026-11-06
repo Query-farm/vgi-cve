@@ -142,7 +142,7 @@ Mirrors `vgi-grpc`'s start/stop pattern:
 3. The Makefile exports `VGI_CVE_WORKER` (the worker binary, the ATTACH
    `LOCATION`) and `VGI_CVE_TEST_URL=http://127.0.0.1:<n>/rest/json/cves/2.0`
    (read by `.test` files and passed as the `base_url` option).
-4. `haybarn-unittest --test-dir . "test/sql/*"` runs the suite. Its exit status
+4. `haybarn-unittest --keep-home --test-dir . "test/sql/*"` runs the suite. Its exit status
    is captured so the `trap`'s SIGTERM to the mock doesn't mask success.
 5. A shell `trap` kills the mock server and cleans up on exit.
 

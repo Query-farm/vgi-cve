@@ -14,9 +14,9 @@
 # syntax=docker/dockerfile:1
 
 # ---- build stage -----------------------------------------------------------
-# CGO is required (CGO_ENABLED=1): the vgi-go SDK links DuckDB via
-# duckdb/duckdb-go, so the build needs a C/C++ toolchain and the per-arch DuckDB
-# static lib (which a CGO_ENABLED=0 build excludes). Each arch is built on its
+# CGO is required (CGO_ENABLED=1): the vgi-go SDK links the Haybarn 2.0 engine
+# via the haybarn-go bindings, so the build needs a C/C++ toolchain and the
+# per-arch libhaybarn static lib (which a CGO_ENABLED=0 build excludes). Each arch is built on its
 # own NATIVE runner in CI, so this compiles without cross-compilation.
 FROM golang:1.26-bookworm AS build
 WORKDIR /src

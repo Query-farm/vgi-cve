@@ -13,7 +13,7 @@
 #   make clean       Remove built binaries
 #
 # test-sql needs haybarn-unittest on PATH:
-#   uv tool install 'haybarn-unittest<2'
+#   uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'
 #   export PATH="$$HOME/.local/bin:$$PATH"
 
 WORKER_BIN  := vgi-cve-worker
@@ -61,7 +61,7 @@ test-sql: build
 	STATUS=0; \
 	VGI_CVE_WORKER="$(WORKER_PATH)" \
 	VGI_CVE_TEST_URL="http://127.0.0.1:$$PORT/rest/json/cves/2.0" \
-		haybarn-unittest --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)" || STATUS=$$?; \
+		haybarn-unittest --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)" || STATUS=$$?; \
 	exit $$STATUS
 
 fmt:
