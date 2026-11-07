@@ -21,8 +21,7 @@ VGI protocol over stdio. Catalog name: `cve`.
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
 
--- LOCATION is the path to the compiled worker binary.
-ATTACH 'cve' AS cve (TYPE vgi, LOCATION '/path/to/vgi-cve-worker');
+ATTACH 'cve' AS cve (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-cve@v0.2.1');
 
 -- Offline CVSS math (no network):
 SELECT cve.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'); -- 9.8
@@ -38,6 +37,41 @@ SELECT id, cvss_severity, published FROM cve.cve_search('log4j');
 SELECT cve_id, cvss_score, cvss_severity
 FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*');
 ```
+
+## Quick start
+
+Every [GitHub release](https://github.com/Query-farm/vgi-cve/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
+
+```sql
+INSTALL vgi FROM community;
+LOAD vgi;
+
+ATTACH 'cve' AS cve (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-cve@v0.2.1');
+
+-- Compute the CVSS v3.1 base score for the Log4Shell vector (9.8).
+SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');
+
+-- Map a numeric CVSS base score to its qualitative severity band (CRITICAL).
+SELECT cve.main.cvss_severity(9.8);
+```
+
+The offline CVSS scalars need no network. The NVD table functions (`cve`, `cve_search`, `cpe_cves`) call the public NVD 2.0 API, which throttles unauthenticated clients; pass a free NVD key with `api_key := '…'` to raise the limit. See [NVD API terms & rate limits](#nvd-api-terms--rate-limits).
+
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64) and Windows (x86-64). `github-auto://` needs an explicit release tag; change `@v0.2.1` to move to a newer release.
+
+### Other ways to run it
+
+- **Docker** (the image bundles the worker; needs a container runtime):
+
+  ```sql
+  ATTACH 'cve' AS cve (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-cve:0.2.1');
+  ```
+
+- **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-cve/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
+
+### Build from source
+
+To build the worker yourself, see [Build](#build).
 
 ## Functions
 
