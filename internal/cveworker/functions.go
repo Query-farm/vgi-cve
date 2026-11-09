@@ -603,7 +603,7 @@ func (f *SeverityBandsFunction) Metadata() vgi.FunctionMetadata {
 		Categories:  []string{"cve", "cvss"},
 		Examples:    examples,
 		Tags: withExamples(withResultSchema(
-			"CVSS v3.1 Severity Rating Bands",
+			"CVSS Severity Ranges",
 			"Browsable, offline reference table of the five CVSS v3.1 qualitative severity bands "+
 				"(NONE, LOW, MEDIUM, HIGH, CRITICAL) and the inclusive base-score range each covers. "+
 				"It is the discovery counterpart to the cvss_severity scalar: browse it to see exactly "+
