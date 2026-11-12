@@ -554,7 +554,7 @@ func NewCPECVEsFunction() vgi.TableFunction {
 }
 
 // ===========================================================================
-// Browsable discovery table (offline) — cvss_severity_bands()
+// Browsable discovery table (offline) — cvss_severity_bands
 // ===========================================================================
 
 // SeverityBandsSchema is the static result schema of the cvss_severity_bands
@@ -592,7 +592,7 @@ func (f *SeverityBandsFunction) Name() string { return "cvss_severity_bands" }
 func (f *SeverityBandsFunction) Metadata() vgi.FunctionMetadata {
 	examples := []vgi.CatalogExample{
 		{
-			SQL: "SELECT severity, min_score, max_score FROM cve.main.cvss_severity_bands() " +
+			SQL: "SELECT severity, min_score, max_score FROM cve.main.cvss_severity_bands " +
 				"WHERE min_score >= 7.0 ORDER BY min_score;",
 			Description: "List the high-and-above CVSS severity bands with their score ranges.",
 		},

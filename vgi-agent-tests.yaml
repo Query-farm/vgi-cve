@@ -16,7 +16,7 @@ tasks:
   - name: "score_then_band"
     check_sql: "SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H') BETWEEN 9.75 AND 9.85 AND cve.main.cvss_severity(cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H')) = 'CRITICAL';"
   - name: "band_for_score_7_5"
-    check_sql: "SELECT (SELECT severity FROM cve.main.cvss_severity_bands() WHERE 7.5 BETWEEN min_score AND max_score) = 'HIGH';"
+    check_sql: "SELECT (SELECT severity FROM cve.main.cvss_severity_bands WHERE 7.5 BETWEEN min_score AND max_score) = 'HIGH';"
   - name: "lookup_log4shell_cve"
     check_sql: "SELECT count(*) = 1 FROM cve.main.cve('CVE-2021-44228') WHERE cvss_severity = 'CRITICAL' AND cvss_score >= 9.0;"
   - name: "search_log4j_finds_log4shell"
