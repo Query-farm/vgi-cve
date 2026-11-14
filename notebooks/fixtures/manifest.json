@@ -1,0 +1,36 @@
+{
+  "source": "NIST National Vulnerability Database (NVD) CVE API 2.0",
+  "recording_type": "Unmodified official HTTP response bodies",
+  "records": [
+    {
+      "id": "CVE-2021-44228",
+      "file": "CVE-2021-44228.json",
+      "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-44228",
+      "captured_at_utc": "2026-11-14T06:05:01.542551+00:00",
+      "capture_clock": "response file write timestamp",
+      "http_status": 200,
+      "sha256": "56ca236d6aeb10ccdbb1a9e90fc4c6d36e779a661ea9135adc4034d56bb5f5ea",
+      "bytes": 87139
+    },
+    {
+      "id": "CVE-2021-45046",
+      "file": "CVE-2021-45046.json",
+      "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-45046",
+      "captured_at_utc": "2026-11-14T06:06:44.943058+00:00",
+      "capture_clock": "response read completion",
+      "http_status": 200,
+      "sha256": "a2613d058c9366c284feebd7121b36a689c852edc862e7a58264c93b1b4acdf9",
+      "bytes": 26544
+    },
+    {
+      "id": "CVE-2021-45105",
+      "file": "CVE-2021-45105.json",
+      "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-45105",
+      "captured_at_utc": "2026-11-14T06:09:32.099758+00:00",
+      "capture_clock": "response read completion",
+      "http_status": 200,
+      "sha256": "02d824c9fffbdeaeb76c32d0f80b17205a46afcb17f92f60e392fdd1b7024684",
+      "bytes": 43920
+    }
+  ]
+}

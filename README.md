@@ -38,6 +38,11 @@ SELECT cve_id, cvss_score, cvss_severity
 FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*');
 ```
 
+## Executed notebooks
+
+See [the SQL and visualization examples](notebooks/README.md) for a portable,
+executed walkthrough of recorded NVD lookups, CVSS vectors and score comparisons.
+
 ## Quick start
 
 Every [GitHub release](https://github.com/Query-farm/vgi-cve/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
