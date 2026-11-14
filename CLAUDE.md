@@ -149,7 +149,7 @@ Mirrors `vgi-grpc`'s start/stop pattern:
 `cmd/mockserver` and the Go tests share `internal/mocknvd.Handler()`, which
 serves canned NVD 2.0 JSON keyed on query param: `cveId` (Log4Shell record or
 404), `keywordSearch` (3 paginated records), `cpeName` (3 records incl. one with
-no CVSS → NULL score).
+no CVSS → NULL score, severity and vector).
 
 ## Test inventory
 

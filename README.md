@@ -91,9 +91,22 @@ deterministic) and **table functions** (live NVD 2.0 API lookups).
 | --- | --- | --- |
 | `cve(cve_id)` | `id, description, cvss_score DOUBLE, cvss_severity VARCHAR, cvss_vector, published, last_modified, cwe` | Fetch one CVE by ID (one row, or zero rows for a NULL id). |
 | `cve_search(keyword)` | `id, description, cvss_score, cvss_severity, published` | Keyword search of CVE descriptions; paginated, bounded to 100 results. |
-| `cpe_cves(cpe)` | `cve_id, cvss_score, cvss_severity` | CVEs affecting a CPE 2.3 name; paginated, bounded. |
+| `cpe_cves(cpe)` | `cve_id, description, cvss_score, cvss_severity, published` | CVEs affecting a CPE 2.3 name; paginated, bounded. |
 
-A CVE with no CVSS metrics yields a **NULL** `cvss_score`.
+A CVE with no CVSS metrics yields a **NULL** `cvss_score` (and NULL
+`cvss_severity` / `cvss_vector`). `cvss_vector` is the vector NVD scored: v3.1
+when present, else v3.0, else v2; `cvss_base_score` accepts only the v3.x forms.
+
+The two families compose. Re-score a fetched CVE's vector offline and check it
+reproduces NVD's published score:
+
+```sql
+SELECT id, cvss_vector, cvss_score AS nvd_score,
+       cve.main.cvss_base_score(cvss_vector) AS recomputed_score,
+       cvss_score = cve.main.cvss_base_score(cvss_vector) AS scores_agree
+FROM cve.main.cve('CVE-2021-44228')
+ORDER BY id;
+```
 
 ### Named options (table functions)
 
@@ -116,7 +129,8 @@ FROM cve.cve('CVE-2021-44228', api_key := 'your-nvd-key');
   and are fully deterministic — ideal for scoring vectors already in your data.
 - **NULL / absent input → no rows.** A NULL id/keyword/cpe yields zero rows.
 - **No CVSS metrics → NULL score.** Records still under analysis surface a NULL
-  `cvss_score` rather than a misleading `0`.
+  `cvss_score` (and NULL `cvss_severity` / `cvss_vector`) rather than a
+  misleading `0` or empty string.
 - **Bounded & timed.** Searches page through results but stop at 100 rows; every
   HTTP call has a 30 s timeout, so a slow or unreachable endpoint fails fast.
 - **Clear errors, never a crash or hang.** HTTP 4xx/5xx, NVD rate-limiting

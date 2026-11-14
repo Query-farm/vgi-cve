@@ -71,19 +71,6 @@ func withResultSchema(title, descriptionLLM, descriptionMD, keywords, category s
 // does preserve them; we build it from the SAME CatalogExample values so the
 // two never drift, and the linter dedupes them by SQL.
 func withExamples(tags map[string]string, examples []vgi.CatalogExample) map[string]string {
-	type describedExample struct {
-		Description string `json:"description"`
-		SQL         string `json:"sql"`
-	}
-	out := make([]describedExample, len(examples))
-	for i, e := range examples {
-		out[i] = describedExample{Description: e.Description, SQL: e.SQL}
-	}
-	b, err := json.Marshal(out)
-	if err != nil {
-		// The input is derived from static literals; a marshal error is a bug.
-		panic(err)
-	}
-	tags["vgi.example_queries"] = string(b)
+	tags["vgi.example_queries"] = ExampleQueriesJSON(examples...)
 	return tags
 }

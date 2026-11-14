@@ -212,3 +212,21 @@ func gobRoundTrip(s *cveSearchState) (*cveSearchState, error) {
 	}
 	return &cveSearchState{CursorState: cs}, nil
 }
+
+// An unscored record (nil Score) must surface NULL severity/vector, not ”.
+func TestBuildScoredStringNullForUnscored(t *testing.T) {
+	score := 9.8
+	rows := []CVERow{
+		{ID: "a", Score: &score, SeverityStr: "CRITICAL"},
+		{ID: "b", SeverityStr: ""},
+	}
+	arr := buildScoredString(rows, func(r CVERow) string { return r.SeverityStr })
+	defer arr.Release()
+	col := arr.(*array.String)
+	if col.IsNull(0) || col.Value(0) != "CRITICAL" {
+		t.Errorf("row 0 = %q (null=%v), want CRITICAL", col.Value(0), col.IsNull(0))
+	}
+	if !col.IsNull(1) {
+		t.Errorf("row 1 = %q, want NULL for an unscored record", col.Value(1))
+	}
+}

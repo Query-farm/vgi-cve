@@ -69,3 +69,14 @@ CRITICAL
 statement error
 SELECT cve.cvss_base_score('not-a-vector');
 ----
+
+# Composed (published example): score an inventory offline and bucket it with
+# the cvss_severity_bands table, keeping empty bands as zero-count rows.
+query TIT
+WITH inventory(asset, vector) AS (VALUES ('web-01', 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'), ('db-01', 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N'), ('kiosk-01', 'CVSS:3.1/AV:P/AC:H/PR:H/UI:R/S:U/C:L/I:N/A:N'), ('app-02', 'CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:H')), scored AS (SELECT asset, cve.main.cvss_base_score(vector) AS base_score FROM inventory) SELECT b.severity, count(s.asset) AS assets, string_agg(s.asset, ', ' ORDER BY s.asset) AS asset_list FROM cve.main.cvss_severity_bands b LEFT JOIN scored s ON s.base_score BETWEEN b.min_score AND b.max_score GROUP BY b.severity, b.min_score ORDER BY b.min_score;
+----
+NONE	0	NULL
+LOW	1	kiosk-01
+MEDIUM	0	NULL
+HIGH	1	db-01
+CRITICAL	2	app-02, web-01

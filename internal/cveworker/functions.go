@@ -264,6 +264,7 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 				"FROM cve.main.cve('CVE-2021-44228') WHERE cvss_score >= 9.0;",
 			Description: "Look up the Log4Shell CVE and keep only its critical-severity scoring and CWE.",
 		},
+		ExampleRescoreNVDVector,
 	}
 	return vgi.FunctionMetadata{
 		Description: "Fetch a single CVE record by ID from the NVD 2.0 API",
@@ -283,8 +284,8 @@ func (f *CVEFunction) Metadata() vgi.FunctionMetadata {
 				{"id", "VARCHAR", "The CVE identifier, e.g. CVE-2021-44228."},
 				{"description", "VARCHAR", "English description of the vulnerability."},
 				{"cvss_score", "DOUBLE", "CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet."},
-				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL."},
-				{"cvss_vector", "VARCHAR", "The CVSS v3.1 vector string."},
+				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL; NULL when the CVE has no metrics yet."},
+				{"cvss_vector", "VARCHAR", "The CVSS vector string NVD scored (v3.1 preferred, else v3.0, else v2); NULL when the CVE has no metrics yet. cvss_base_score accepts only the v3.x forms."},
 				{"published", "VARCHAR", "Publication timestamp (ISO 8601)."},
 				{"last_modified", "VARCHAR", "Last-modified timestamp (ISO 8601)."},
 				{"cwe", "VARCHAR", "Associated CWE identifier(s)."},
@@ -327,8 +328,8 @@ func (f *CVEFunction) Process(_ context.Context, _ *vgi.ProcessParams, state *cv
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Description }),
 		buildNullableScore(r),
-		vgi.BuildStringArray(n, func(i int64) string { return r[i].SeverityStr }),
-		vgi.BuildStringArray(n, func(i int64) string { return r[i].Vector }),
+		buildScoredString(r, func(row CVERow) string { return row.SeverityStr }),
+		buildScoredString(r, func(row CVERow) string { return row.Vector }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Published }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].LastModified }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].CWE }),
@@ -378,6 +379,7 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 				"WHERE cvss_score IS NOT NULL ORDER BY cvss_score DESC;",
 			Description: "Rank the scored 'log4j' CVEs by CVSS base score, most severe first.",
 		},
+		ExampleSearchAffectsInstalled,
 	}
 	return vgi.FunctionMetadata{
 		Description: "Keyword-search the NVD 2.0 API (paginated, bounded to 100 results)",
@@ -396,7 +398,7 @@ func (f *CVESearchFunction) Metadata() vgi.FunctionMetadata {
 				{"id", "VARCHAR", "The CVE identifier."},
 				{"description", "VARCHAR", "English description of the vulnerability."},
 				{"cvss_score", "DOUBLE", "CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet."},
-				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL."},
+				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL; NULL when the CVE has no metrics yet."},
 				{"published", "VARCHAR", "Publication timestamp (ISO 8601)."},
 			},
 		), examples),
@@ -434,7 +436,7 @@ func (f *CVESearchFunction) Process(_ context.Context, _ *vgi.ProcessParams, sta
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Description }),
 		buildNullableScore(r),
-		vgi.BuildStringArray(n, func(i int64) string { return r[i].SeverityStr }),
+		buildScoredString(r, func(row CVERow) string { return row.SeverityStr }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Published }),
 	}, n)
 	defer batch.Release()
@@ -503,7 +505,7 @@ func (f *CPECVEsFunction) Metadata() vgi.FunctionMetadata {
 				{"cve_id", "VARCHAR", "The CVE identifier affecting the CPE."},
 				{"description", "VARCHAR", "English description of the vulnerability."},
 				{"cvss_score", "DOUBLE", "CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet."},
-				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL."},
+				{"cvss_severity", "VARCHAR", "Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL; NULL when the CVE has no metrics yet."},
 				{"published", "VARCHAR", "Publication timestamp (ISO 8601)."},
 			},
 		), examples),
@@ -541,7 +543,7 @@ func (f *CPECVEsFunction) Process(_ context.Context, _ *vgi.ProcessParams, state
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].ID }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Description }),
 		buildNullableScore(r),
-		vgi.BuildStringArray(n, func(i int64) string { return r[i].SeverityStr }),
+		buildScoredString(r, func(row CVERow) string { return row.SeverityStr }),
 		vgi.BuildStringArray(n, func(i int64) string { return r[i].Published }),
 	}, n)
 	defer batch.Release()
@@ -596,6 +598,7 @@ func (f *SeverityBandsFunction) Metadata() vgi.FunctionMetadata {
 				"WHERE min_score >= 7.0 ORDER BY min_score;",
 			Description: "List the high-and-above CVSS severity bands with their score ranges.",
 		},
+		ExampleInventoryBands,
 	}
 	return vgi.FunctionMetadata{
 		Description: "The five CVSS v3.1 qualitative severity bands and their base-score ranges",
@@ -664,6 +667,23 @@ func buildNullableScore(rows []CVERow) arrow.Array {
 			b.AppendNull()
 		} else {
 			b.Append(*r.Score)
+		}
+	}
+	return b.NewArray()
+}
+
+// buildScoredString builds a string column derived from a record's CVSS metric
+// (severity, vector). A record with no CVSS metrics (nil Score) yields SQL NULL
+// rather than an empty string, matching the NULL cvss_score on the same row.
+func buildScoredString(rows []CVERow, fn func(CVERow) string) arrow.Array {
+	b := array.NewStringBuilder(memory.NewGoAllocator())
+	defer b.Release()
+	b.Reserve(len(rows))
+	for _, r := range rows {
+		if r.Score == nil {
+			b.AppendNull()
+		} else {
+			b.Append(fn(r))
 		}
 	}
 	return b.NewArray()
