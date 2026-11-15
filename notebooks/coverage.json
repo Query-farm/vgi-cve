@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "catalog_sha256": "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+        "notes": "Actual complete worker-filtered functions/tables/views exports reconcile to six names, including severity-band relation. Optional API key does not exclude lookup functions."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7",
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "catalog_sha256": "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7",
+        "notes": "Complete immutable current main/functions registration sources reviewed with release delta. All six names/signatures unchanged; current severity/vector nullness is corrected relative to release. No current binary run is claimed; dirty preexisting binary excluded. Source-only collection reconciliation remains false."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_keep_the_vector_with_the_score.ipynb",
+      "sha256": "6f0e52cbceff947a0ebacb01e9adaab0494da33d6a95ab3140df50cb2067935d",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "8a653066e43eaff3ef468f8c9bc4e47aa945ddd132b906053c3af62dbfedb9b9"
+      }
+    },
+    {
+      "path": "02_compare_keyword_and_product_membership.ipynb",
+      "sha256": "b3501241ecbf3744551b5f267da8ebcde0214ffc83cfcda6db9677502f954d8a",
+      "execution": {
+        "path": "coverage/run-02.json",
+        "sha256": "30f98f00fc9f8b01153fa7d342c700fabc3b2525321c642133f394d02080c260"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "cve"
+      },
+      "notebook": "01_keep_the_vector_with_the_score.ipynb",
+      "sql": [
+        {
+          "cell": "b844dac2",
+          "reference": "cve.main.cve"
+        }
+      ],
+      "narrative_cells": [
+        "0c13b69f"
+      ],
+      "result_cells": [
+        "b844dac2"
+      ],
+      "interpretation_cells": [
+        "67eeda22"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "6f0e52cbceff947a0ebacb01e9adaab0494da33d6a95ab3140df50cb2067935d",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Retrieve three genuine recorded NVD bodies through actual released client. Left join preserves requested IDs, source timestamps and projected metric/vector provenance; three comparable v3.1 scores remain explicit before thresholding."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "cvss_base_score"
+      },
+      "notebook": "01_keep_the_vector_with_the_score.ipynb",
+      "sql": [
+        {
+          "cell": "b844dac2",
+          "reference": "cve.main.cvss_base_score"
+        }
+      ],
+      "narrative_cells": [
+        "0c13b69f"
+      ],
+      "result_cells": [
+        "67eeda22"
+      ],
+      "interpretation_cells": [
+        "67eeda22"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "6f0e52cbceff947a0ebacb01e9adaab0494da33d6a95ab3140df50cb2067935d",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Recompute only explicit v3.1 vectors with the real offline worker. Returned 10.0/9.0/5.9 scores agree; no Python scoring. Synthetic NULL, zero and excluded v2 controls stay separate from the observed cohort."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "cvss_severity"
+      },
+      "notebook": "01_keep_the_vector_with_the_score.ipynb",
+      "sql": [
+        {
+          "cell": "8b1ad762",
+          "reference": "cve.main.cvss_severity"
+        }
+      ],
+      "narrative_cells": [
+        "be738add"
+      ],
+      "result_cells": [
+        "8b1ad762"
+      ],
+      "interpretation_cells": [
+        "738d611b"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "6f0e52cbceff947a0ebacb01e9adaab0494da33d6a95ab3140df50cb2067935d",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Offline scalar preserves NULL while labeling a valid zero NONE; controls and recomputed bands are visible. Numeric missingness is not silently given a low severity."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "cvss_severity_bands"
+      },
+      "notebook": "02_compare_keyword_and_product_membership.ipynb",
+      "sql": [
+        {
+          "cell": "bands-sql",
+          "reference": "cve.main.cvss_severity_bands"
+        }
+      ],
+      "narrative_cells": [
+        "discovery-question"
+      ],
+      "result_cells": [
+        "bands-sql"
+      ],
+      "interpretation_cells": [
+        "queue-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "b3501241ecbf3744551b5f267da8ebcde0214ffc83cfcda6db9677502f954d8a",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Read all five inclusive ranges, select HIGH lower bound7.0, and join observed scores to bands. Boundary drives two-of-four product selection; unscored row remains outside numeric banding. MEDIUM experiment changes cutoff to4.0."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "cve_search"
+      },
+      "notebook": "02_compare_keyword_and_product_membership.ipynb",
+      "sql": [
+        {
+          "cell": "fetch-sql",
+          "reference": "cve.main.cve_search"
+        }
+      ],
+      "narrative_cells": [
+        "fetch-question"
+      ],
+      "result_cells": [
+        "fetch-sql"
+      ],
+      "interpretation_cells": [
+        "membership-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "b3501241ecbf3744551b5f267da8ebcde0214ffc83cfcda6db9677502f954d8a",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Real client requests three exact synthetic pages and yields five fictional keyword IDs including zero and missing scores. Full membership join identifies two keyword-only IDs; keyword occurrence is not equated to product association."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "cpe_cves"
+      },
+      "notebook": "02_compare_keyword_and_product_membership.ipynb",
+      "sql": [
+        {
+          "cell": "fetch-sql",
+          "reference": "cve.main.cpe_cves"
+        }
+      ],
+      "narrative_cells": [
+        "fetch-question"
+      ],
+      "result_cells": [
+        "fetch-sql"
+      ],
+      "interpretation_cells": [
+        "queue-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "/root/notebooks_sympy",
+        "reviewed_at": "2026-11-15T00:20:10.484404+00:00",
+        "notebook_sha256": "b3501241ecbf3744551b5f267da8ebcde0214ffc83cfcda6db9677502f954d8a",
+        "catalog_sha256": [
+          "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+          "ff4e555156bda79c00498f79f70274b62cbeca47806002acd25df05b240e08e7"
+        ],
+        "purpose": "Preserve source identity, vector context and query membership before applying an explicit local score threshold.",
+        "finding": "Real client requests two synthetic product pages and yields four fictional IDs, including product-only candidate and unscored row. Product membership is retained before joining reference bands and applying local cutoff; raw empty release severity remains visible."
+      }
+    }
+  ]
+}

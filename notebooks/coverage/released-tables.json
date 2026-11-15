@@ -1,0 +1,50 @@
+{
+  "query": "SELECT * FROM duckdb_tables() WHERE database_name='cve' ORDER BY schema_name,table_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "schema_oid",
+    "table_name",
+    "table_oid",
+    "comment",
+    "tags",
+    "internal",
+    "temporary",
+    "has_primary_key",
+    "estimated_size",
+    "column_count",
+    "index_count",
+    "check_constraint_count",
+    "sql"
+  ],
+  "rows": [
+    [
+      "cve",
+      22595,
+      "main",
+      22596,
+      "cvss_severity_bands",
+      22735,
+      "The five CVSS v3.1 qualitative severity bands and the base-score range each covers.",
+      {
+        "domain": "security",
+        "topic": "cve-and-cvss",
+        "vgi.category": "CVSS Scoring",
+        "vgi.doc_llm": "Browsable, offline reference table of the five CVSS v3.1 qualitative severity bands (NONE, LOW, MEDIUM, HIGH, CRITICAL) and the inclusive base-score range each covers. It is the discovery counterpart to the cvss_severity scalar: browse it to see exactly how a numeric base score maps to a band. Deterministic and needs no network access.",
+        "vgi.doc_md": "## `cvss_severity_bands`\n\nA browsable reference table of the five **CVSS v3.1 qualitative severity bands** and the inclusive base-score range each covers \u2014 the discovery counterpart to the `cvss_severity` scalar. It is fully offline and deterministic.\n\n| severity | min_score | max_score |\n|---|---|---|\n| NONE | 0.0 | 0.0 |\n| LOW | 0.1 | 3.9 |\n| MEDIUM | 4.0 | 6.9 |\n| HIGH | 7.0 | 8.9 |\n| CRITICAL | 9.0 | 10.0 |\n\nJoin it against a column of scores, or read it to learn the banding before calling `cvss_severity`.",
+        "vgi.example_queries": "[{\"description\":\"List the high-and-above CVSS severity bands with their score ranges.\",\"sql\":\"SELECT severity, min_score, max_score FROM cve.main.cvss_severity_bands WHERE min_score >= 7.0 ORDER BY min_score;\"},{\"description\":\"Band a numeric CVSS score by joining it against the reference ranges.\",\"sql\":\"SELECT b.severity FROM cve.main.cvss_severity_bands b WHERE 7.5 BETWEEN b.min_score AND b.max_score;\"}]",
+        "vgi.keywords": "[\"cvss\",\"severity band\",\"severity bands\",\"score range\",\"none\",\"low\",\"medium\",\"high\",\"critical\",\"cvss v3.1\",\"reference\",\"discovery\"]",
+        "vgi.title": "CVSS Severity Ranges"
+      },
+      false,
+      false,
+      true,
+      0,
+      3,
+      1,
+      0,
+      "CREATE TABLE cvss_severity_bands(severity VARCHAR, min_score DOUBLE NOT NULL, max_score DOUBLE NOT NULL, PRIMARY KEY(severity));"
+    ]
+  ]
+}

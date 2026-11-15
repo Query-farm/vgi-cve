@@ -1,0 +1,239 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='cve' ORDER BY schema_name,function_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "cve",
+      "22595",
+      "main",
+      "cpe_cves",
+      null,
+      "table",
+      "List CVEs affecting a CPE name from the NVD 2.0 API (paginated, bounded)",
+      null,
+      {
+        "vgi.category": "NVD Lookup",
+        "vgi.doc_llm": "List the CVEs that affect a given CPE 2.3 product name (e.g. cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*) using the NVD 2.0 API, returning each CVE identifier with its description, CVSS base score, qualitative severity, and publication date. Results are paginated server-side and bounded.",
+        "vgi.doc_md": "List CVEs affecting a CPE 2.3 product name via the NVD 2.0 API, e.g. `cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*')`.",
+        "vgi.example_queries": "[{\"description\":\"List only the high/critical CVEs affecting Apache Log4j 2.14.1, worst first.\",\"sql\":\"SELECT cve_id, description, cvss_score, cvss_severity FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*') WHERE cvss_severity IN ('HIGH', 'CRITICAL') ORDER BY cvss_score DESC;\"}]",
+        "vgi.keywords": "[\"cpe\",\"cpe cves\",\"product vulnerabilities\",\"affected products\",\"nvd\",\"cpe 2.3\",\"vulnerable versions\",\"cvss\",\"vulnerability inventory\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"cve_id\",\"type\":\"VARCHAR\",\"description\":\"The CVE identifier affecting the CPE.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"English description of the vulnerability.\"},{\"name\":\"cvss_score\",\"type\":\"DOUBLE\",\"description\":\"CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet.\"},{\"name\":\"cvss_severity\",\"type\":\"VARCHAR\",\"description\":\"Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL.\"},{\"name\":\"published\",\"type\":\"VARCHAR\",\"description\":\"Publication timestamp (ISO 8601).\"}]",
+        "vgi.title": "CVEs Affecting a CPE"
+      },
+      null,
+      [
+        "cpe",
+        "api_key",
+        "base_url"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22601,
+      [
+        "SELECT cve_id, description, cvss_score, cvss_severity FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*') WHERE cvss_severity IN ('HIGH', 'CRITICAL') ORDER BY cvss_score DESC;"
+      ],
+      null,
+      [
+        "cve",
+        "nvd",
+        "cpe"
+      ]
+    ],
+    [
+      "cve",
+      "22595",
+      "main",
+      "cve",
+      null,
+      "table",
+      "Fetch a single CVE record by ID from the NVD 2.0 API",
+      null,
+      {
+        "vgi.category": "NVD Lookup",
+        "vgi.doc_llm": "Fetch a single CVE record by its identifier (e.g. CVE-2021-44228) from the NVD 2.0 API, returning its description, CVSS base score, qualitative severity, CVSS vector, published and last-modified timestamps, and associated CWE. Returns no rows for an unknown CVE.",
+        "vgi.doc_md": "Fetch one CVE record by ID from the NVD 2.0 API, e.g. `cve('CVE-2021-44228')`.",
+        "vgi.example_queries": "[{\"description\":\"Look up the Log4Shell CVE and keep only its critical-severity scoring and CWE.\",\"sql\":\"SELECT id, cvss_score, cvss_severity, cwe FROM cve.main.cve('CVE-2021-44228') WHERE cvss_score \\u003e= 9.0;\"}]",
+        "vgi.keywords": "[\"cve\",\"cve lookup\",\"cve by id\",\"nvd\",\"vulnerability\",\"advisory\",\"cvss\",\"cwe\",\"log4shell\",\"national vulnerability database\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"id\",\"type\":\"VARCHAR\",\"description\":\"The CVE identifier, e.g. CVE-2021-44228.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"English description of the vulnerability.\"},{\"name\":\"cvss_score\",\"type\":\"DOUBLE\",\"description\":\"CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet.\"},{\"name\":\"cvss_severity\",\"type\":\"VARCHAR\",\"description\":\"Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL.\"},{\"name\":\"cvss_vector\",\"type\":\"VARCHAR\",\"description\":\"The CVSS v3.1 vector string.\"},{\"name\":\"published\",\"type\":\"VARCHAR\",\"description\":\"Publication timestamp (ISO 8601).\"},{\"name\":\"last_modified\",\"type\":\"VARCHAR\",\"description\":\"Last-modified timestamp (ISO 8601).\"},{\"name\":\"cwe\",\"type\":\"VARCHAR\",\"description\":\"Associated CWE identifier(s).\"}]",
+        "vgi.title": "CVE Lookup by ID"
+      },
+      null,
+      [
+        "cveid",
+        "api_key",
+        "base_url"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22602,
+      [
+        "SELECT id, cvss_score, cvss_severity, cwe FROM cve.main.cve('CVE-2021-44228') WHERE cvss_score >= 9.0;"
+      ],
+      null,
+      [
+        "cve",
+        "nvd"
+      ]
+    ],
+    [
+      "cve",
+      "22595",
+      "main",
+      "cve_search",
+      null,
+      "table",
+      "Keyword-search the NVD 2.0 API (paginated, bounded to 100 results)",
+      null,
+      {
+        "vgi.category": "NVD Lookup",
+        "vgi.doc_llm": "Keyword-search CVE descriptions through the NVD 2.0 API and return the matching CVEs with their description, CVSS base score, qualitative severity, and publication date. Results are paginated server-side and bounded to 100 rows.",
+        "vgi.doc_md": "Keyword-search CVE descriptions via the NVD 2.0 API, e.g. `cve_search('log4j')`.",
+        "vgi.example_queries": "[{\"description\":\"Rank the scored 'log4j' CVEs by CVSS base score, most severe first.\",\"sql\":\"SELECT id, cvss_score, cvss_severity FROM cve.main.cve_search('log4j') WHERE cvss_score IS NOT NULL ORDER BY cvss_score DESC;\"}]",
+        "vgi.keywords": "[\"cve search\",\"keyword search\",\"search vulnerabilities\",\"nvd\",\"full text\",\"advisory lookup\",\"cvss\",\"find cves\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"id\",\"type\":\"VARCHAR\",\"description\":\"The CVE identifier.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"English description of the vulnerability.\"},{\"name\":\"cvss_score\",\"type\":\"DOUBLE\",\"description\":\"CVSS base score (0.0-10.0); NULL when the CVE has no metrics yet.\"},{\"name\":\"cvss_severity\",\"type\":\"VARCHAR\",\"description\":\"Qualitative band: NONE, LOW, MEDIUM, HIGH, or CRITICAL.\"},{\"name\":\"published\",\"type\":\"VARCHAR\",\"description\":\"Publication timestamp (ISO 8601).\"}]",
+        "vgi.title": "CVE Keyword Search"
+      },
+      null,
+      [
+        "keyword",
+        "api_key",
+        "base_url"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22603,
+      [
+        "SELECT id, cvss_score, cvss_severity FROM cve.main.cve_search('log4j') WHERE cvss_score IS NOT NULL ORDER BY cvss_score DESC;"
+      ],
+      null,
+      [
+        "cve",
+        "nvd"
+      ]
+    ],
+    [
+      "cve",
+      "22595",
+      "main",
+      "cvss_base_score",
+      null,
+      "scalar",
+      "Compute the CVSS v3.1 base score from a vector string",
+      null,
+      {
+        "vgi.category": "CVSS Scoring",
+        "vgi.doc_llm": "Compute the CVSS v3.1 base score (0.0-10.0) from a CVSS vector string such as 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'. Implements the official base equation (impact, exploitability, scope, spec roundup) entirely offline. A malformed vector raises an error.",
+        "vgi.doc_md": "Compute the CVSS v3.1 base score from a vector string, e.g. the Log4Shell vector -> `9.8`.",
+        "vgi.example_queries": "[{\"description\":\"Compute the CVSS v3.1 base score for the Log4Shell vector (returns 9.8).\",\"sql\":\"SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');\"}]",
+        "vgi.keywords": "[\"cvss\",\"base score\",\"cvss v3.1\",\"vector string\",\"cvss vector\",\"scoring\",\"calculator\",\"exploitability\",\"impact\",\"scope\",\"vulnerability scoring\"]",
+        "vgi.title": "CVSS Base Score Calculator"
+      },
+      "DOUBLE",
+      [
+        "vector"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT cve.main.cvss_base_score('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');"
+      ],
+      "CONSISTENT",
+      [
+        "cve",
+        "cvss"
+      ]
+    ],
+    [
+      "cve",
+      "22595",
+      "main",
+      "cvss_severity",
+      null,
+      "scalar",
+      "Map a CVSS base score (0.0-10.0) to NONE/LOW/MEDIUM/HIGH/CRITICAL",
+      null,
+      {
+        "vgi.category": "CVSS Scoring",
+        "vgi.doc_llm": "Map a numeric CVSS v3.1 base score in the range 0.0-10.0 to its qualitative severity band: NONE, LOW, MEDIUM, HIGH, or CRITICAL. Offline, deterministic, no network. Use to bucket and triage vulnerabilities by severity.",
+        "vgi.doc_md": "Map a CVSS base score (0.0-10.0) to its severity band, e.g. `cvss_severity(9.8)` -> `'CRITICAL'`.",
+        "vgi.example_queries": "[{\"description\":\"Map a numeric CVSS base score to its qualitative band (returns 'CRITICAL').\",\"sql\":\"SELECT cve.main.cvss_severity(9.8);\"}]",
+        "vgi.keywords": "[\"cvss\",\"severity\",\"severity band\",\"score to severity\",\"qualitative rating\",\"none\",\"low\",\"medium\",\"high\",\"critical\",\"triage\",\"vulnerability\"]",
+        "vgi.title": "CVSS Severity Band"
+      },
+      "VARCHAR",
+      [
+        "score"
+      ],
+      [
+        "DOUBLE"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22600,
+      [
+        "SELECT cve.main.cvss_severity(9.8);"
+      ],
+      "CONSISTENT",
+      [
+        "cve",
+        "cvss"
+      ]
+    ]
+  ]
+}

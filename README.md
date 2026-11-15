@@ -41,7 +41,8 @@ FROM cve.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*');
 ## Executed notebooks
 
 See [the SQL and visualization examples](notebooks/README.md) for a portable,
-executed walkthrough of recorded NVD lookups, CVSS vectors and score comparisons.
+executed walkthroughs of recorded NVD lookups, CVSS vectors and score comparisons,
+plus an explicit synthetic keyword-versus-product membership exercise.
 
 ## Quick start
 

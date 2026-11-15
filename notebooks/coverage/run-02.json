@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "notebook_sha256": "b3501241ecbf3744551b5f267da8ebcde0214ffc83cfcda6db9677502f954d8a",
+  "catalog_sha256": "c73e44b27e6f6cde2ef765cbbcb1d14bd8df86eea802192cdb4188396b8209e6",
+  "worker_revision": "89ea9615fc87b32fb0268d5681a21547e9698da5",
+  "status": "success",
+  "executed_at": "2026-11-15T00:20:10.484404+00:00",
+  "engine": "Haybarn 2.0.0rc11 / community VGI; native CVE v0.4.0; shared v0.3.42",
+  "command": "uv run --locked vgi-notebooks 02_compare_keyword_and_product_membership.ipynb --timeout 600",
+  "catalog_aliases": [
+    "cve"
+  ],
+  "cells": [
+    {
+      "id": "parameters",
+      "status": "success",
+      "execution_count": 1,
+      "source_sha256": "9c931a43fa49d3a81fa5ba8afef112861fb5a0bb26b742e73a53d2066c4d0110",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "bootstrap",
+      "status": "success",
+      "execution_count": 2,
+      "source_sha256": "2d38fbd0e5105151f518a92c6bfa4900e490aa830e4e5c10e61d13c1afafdebd",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "setup",
+      "status": "success",
+      "execution_count": 3,
+      "source_sha256": "6df3e39d764de293f065580cfb5d06e10499785249829a14dd9c069d9e5a5c50",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "bands-sql",
+      "status": "success",
+      "execution_count": 4,
+      "source_sha256": "1835ff84ab7d91e39a1c4b5a1bcc85504c625b0be22397ef2e0966af9197c918",
+      "outputs_sha256": "6cba360885c090b2392bce3fecb8917685427f04676e90e3129b2c080e7bff60"
+    },
+    {
+      "id": "fetch-sql",
+      "status": "success",
+      "execution_count": 5,
+      "source_sha256": "bcc117373c37e29bd5f6853069560d6b10a8ec36e2fef81569548c2f2349a18f",
+      "outputs_sha256": "0a36087629cb157f348246d3dabe37bfe9411ee2ce009869c490b19921f60ca3"
+    },
+    {
+      "id": "membership-sql",
+      "status": "success",
+      "execution_count": 6,
+      "source_sha256": "33fc5edd79341f0df3ac351a3f3866581de5016c53d6dc0eb45654748b9cfffb",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "membership-finding",
+      "status": "success",
+      "execution_count": 7,
+      "source_sha256": "f96331c30fccb0ee69913b07961891af65b72a2eec97826089829db7cade1d18",
+      "outputs_sha256": "805d024e4673b95278f4d8000e14f8409a3d934c6215c159ba177d7f77efad58"
+    },
+    {
+      "id": "queue-sql",
+      "status": "success",
+      "execution_count": 8,
+      "source_sha256": "8d559c2f4ca2becd7019199fad22971e4bc80b603a2dbaa2ee473fe6235fa64d",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "queue-finding",
+      "status": "success",
+      "execution_count": 9,
+      "source_sha256": "a27aaced03804c975ca10c46deeeb81a4a4bf10308c45db2d339afaae201c423",
+      "outputs_sha256": "36e13d467dc9ea31b6ca141ee7caac7e5687175e1b12f40f5e6358aa07dbdff1"
+    },
+    {
+      "id": "checks-sql",
+      "status": "success",
+      "execution_count": 10,
+      "source_sha256": "e2b0d0a904e03b060717eab7fecf82ccf8d79eaeb3312cfc9b4fb0dedd987da6",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "checks-finding",
+      "status": "success",
+      "execution_count": 11,
+      "source_sha256": "4f5455e83addaf2bdfd4a76e1f96fba3b6b6b21d2851ba80df824f0d4bd82c35",
+      "outputs_sha256": "0968902efa2a366923c58595c6d8f1572533010446e7c4c26e7ac2141082e9b0"
+    },
+    {
+      "id": "cleanup",
+      "status": "success",
+      "execution_count": 12,
+      "source_sha256": "0bf8ca21bff397dab13f7ad55891bec878a67cbd2cf547fa64952761bd499fb2",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}
