@@ -1,0 +1,64 @@
+{
+  "resultsPerPage": 2,
+  "startIndex": 0,
+  "totalResults": 4,
+  "format": "NVD_CVE",
+  "version": "2.0",
+  "timestamp": "2099-01-03T00:00:00.000",
+  "vulnerabilities": [
+    {
+      "cve": {
+        "id": "CVE-2099-90002",
+        "published": "2099-01-01T00:00:00.000",
+        "lastModified": "2099-01-02T00:00:00.000",
+        "descriptions": [
+          {
+            "lang": "en",
+            "value": "Synthetic teaching record 2; no real vulnerability or affected product is asserted."
+          }
+        ],
+        "metrics": {
+          "cvssMetricV31": [
+            {
+              "source": "synthetic.example",
+              "type": "Primary",
+              "cvssData": {
+                "version": "3.1",
+                "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                "baseScore": 9.8,
+                "baseSeverity": "CRITICAL"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "cve": {
+        "id": "CVE-2099-90003",
+        "published": "2099-01-01T00:00:00.000",
+        "lastModified": "2099-01-02T00:00:00.000",
+        "descriptions": [
+          {
+            "lang": "en",
+            "value": "Synthetic teaching record 3; no real vulnerability or affected product is asserted."
+          }
+        ],
+        "metrics": {
+          "cvssMetricV31": [
+            {
+              "source": "synthetic.example",
+              "type": "Primary",
+              "cvssData": {
+                "version": "3.1",
+                "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+                "baseScore": 7.5,
+                "baseSeverity": "HIGH"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

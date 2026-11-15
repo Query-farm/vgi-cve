@@ -1,0 +1,67 @@
+{
+  "provenance": "Entirely synthetic NVD-shaped responses; fictional IDs, product and scores for a pagination/membership exercise. Not NVD recordings.",
+  "keyword": "example-widget",
+  "cpe": "cpe:2.3:a:example:widget:1.0:*:*:*:*:*:*:*",
+  "records": [
+    {
+      "id": "keyword-0",
+      "file": "keyword-0.json",
+      "parameters": {
+        "keywordSearch": "example-widget",
+        "resultsPerPage": "50",
+        "startIndex": "0"
+      },
+      "sha256": "7978f97ae19263b409c8d7a47672fe4e4e1095f148840066620d62aa70316e92",
+      "response_rows": 2,
+      "total_results": 5
+    },
+    {
+      "id": "keyword-2",
+      "file": "keyword-2.json",
+      "parameters": {
+        "keywordSearch": "example-widget",
+        "resultsPerPage": "50",
+        "startIndex": "2"
+      },
+      "sha256": "084b2fcd975decc3b6b64af3fb3acfa79c3fc40583da399f6095e21b37ce20f0",
+      "response_rows": 2,
+      "total_results": 5
+    },
+    {
+      "id": "keyword-4",
+      "file": "keyword-4.json",
+      "parameters": {
+        "keywordSearch": "example-widget",
+        "resultsPerPage": "50",
+        "startIndex": "4"
+      },
+      "sha256": "89809899ec153f4f959359409c3f79254108fc22508cfd7ff1d49b6989f60fd9",
+      "response_rows": 1,
+      "total_results": 5
+    },
+    {
+      "id": "product-0",
+      "file": "product-0.json",
+      "parameters": {
+        "cpeName": "cpe:2.3:a:example:widget:1.0:*:*:*:*:*:*:*",
+        "resultsPerPage": "50",
+        "startIndex": "0"
+      },
+      "sha256": "7a372b8c79609bcc393db30ae8dc91a3240a973e9fab124dbd392172984e0f8d",
+      "response_rows": 2,
+      "total_results": 4
+    },
+    {
+      "id": "product-2",
+      "file": "product-2.json",
+      "parameters": {
+        "cpeName": "cpe:2.3:a:example:widget:1.0:*:*:*:*:*:*:*",
+        "resultsPerPage": "50",
+        "startIndex": "2"
+      },
+      "sha256": "713be70c82a8f2ae396d2ce51279990d1063bd2951e0ae067ae1c2cf18f009b2",
+      "response_rows": 2,
+      "total_results": 4
+    }
+  ]
+}
