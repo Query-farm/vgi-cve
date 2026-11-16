@@ -92,9 +92,9 @@ jobs:
 
         echo "::group::stdio entrypoint smoke (offline CVSS suite, cold container per ATTACH)"
         SKIP_MOCK=1 \
-          TRANSPORT=subprocess \
+          TRANSPORT=stdio \
           TEST_PATTERN="test/sql/cvss_offline.test" \
-          VGI_CVE_WORKER="docker run -i --rm $CITEST_IMAGE stdio" \
+          WORKER="docker run -i --rm $CITEST_IMAGE stdio" \
           ci/run-integration.sh
         echo "::endgroup::"
 
@@ -105,6 +105,6 @@ jobs:
         SKIP_MOCK=1 \
           TRANSPORT=http \
           TEST_PATTERN="test/sql/cvss_offline.test" \
-          VGI_CVE_WORKER="http://localhost:18000" \
+          WORKER="http://localhost:18000" \
           ci/run-integration.sh
         echo "::endgroup::"

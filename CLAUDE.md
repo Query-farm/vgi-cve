@@ -159,20 +159,19 @@ column (the NULL `cvss_score`), build a `array.Float64Builder` directly and call
 
 ## Mock-NVD E2E (how `make test-sql` works)
 
-Mirrors `vgi-grpc`'s start/stop pattern:
+`make test-sql` runs `ci/run-integration.sh` (adapted from the vgi-starter)
+once per transport — stdio, launch, http — exactly as CI's matrix does:
 
-1. `make build` compiles `vgi-cve-worker` **and** `mockserver`.
-2. `mockserver --addr 127.0.0.1:0` binds a free port and prints `PORT:<n>`; the
-   Makefile captures it.
-3. The Makefile exports `VGI_CVE_WORKER` (the worker binary, the ATTACH
-   `LOCATION`) and `VGI_CVE_TEST_URL=http://127.0.0.1:<n>/rest/json/cves/2.0`,
-   plus `VGI_CVE_KEV_URL` / `VGI_CVE_EPSS_URL` / `VGI_CVE_OSV_URL`. The `.test`
-   files read these and pass them as `base_url`. `ci/run-integration.sh`
-   exports the same variables, so CI's transport matrix needs no workflow
-   change.
-4. `haybarn-unittest --keep-home --test-dir . "test/sql/*"` runs the suite. Its exit status
-   is captured so the `trap`'s SIGTERM to the mock doesn't mask success.
-5. A shell `trap` kills the mock server and cleans up on exit.
+1. `make build` compiles `vgi-cve-worker`; `make tools` installs the pinned
+   `haybarn-unittest` into `.tools`.
+2. The script builds `cmd/mockserver`, starts it on a free port (it prints
+   `PORT:<n>`) and exports `VGI_CVE_TEST_URL=http://127.0.0.1:<n>/rest/json/cves/2.0`
+   plus `VGI_CVE_KEV_URL` / `VGI_CVE_EPSS_URL` / `VGI_CVE_OSV_URL`; the `.test`
+   files pass these as `base_url`.
+3. It sets `VGI_CVE_WORKER` (the ATTACH `LOCATION`) per transport: the binary
+   path, `launch:<path>`, or `http://127.0.0.1:<port>` of a `--http` worker.
+4. It warms the signed `vgi` extension, runs the staged suite with error-skipping
+   disabled, and fails on any skip not listed in `EXPECTED_SKIP_REASONS`.
 
 `cmd/mockserver` and the Go tests share `internal/mocknvd.Handler()`, which
 serves canned NVD 2.0 JSON keyed on query param: `cveId` (Log4Shell record or

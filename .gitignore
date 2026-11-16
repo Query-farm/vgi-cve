@@ -17,3 +17,6 @@ coverage.out
 
 # vgi-lint AI/review caches
 .vgi-*-cache.json
+
+# SQL test runner (make tools)
+/.tools/
