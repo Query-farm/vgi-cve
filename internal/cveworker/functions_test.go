@@ -88,6 +88,27 @@ func TestCVEFunctionNullArgNoRows(t *testing.T) {
 	}
 }
 
+// A blank id/keyword/CPE yields no rows without touching the network (the
+// base_url here is unreachable, so any request would fail).
+func TestBlankArgsNoRowsNoNetwork(t *testing.T) {
+	const dead = "http://127.0.0.1:1/unreachable"
+	if st, err := (&CVEFunction{}).NewState(&vgi.ProcessParams{Args: argsWithBaseURL(strCol(t, " ", false), dead)}); err != nil || len(st.Rows) != 0 {
+		t.Errorf("cve(' '): rows=%v err=%v", st, err)
+	}
+	if st, err := (&CVESearchFunction{}).NewState(&vgi.ProcessParams{Args: argsWithBaseURL(strCol(t, "", false), dead)}); err != nil || len(st.Rows) != 0 {
+		t.Errorf("cve_search(''): rows=%v err=%v", st, err)
+	}
+	if st, err := (&CPECVEsFunction{}).NewState(&vgi.ProcessParams{Args: argsWithBaseURL(strCol(t, "", false), dead)}); err != nil || len(st.Rows) != 0 {
+		t.Errorf("cpe_cves(''): rows=%v err=%v", st, err)
+	}
+	if st, err := (&KEVCVEFunction{}).NewState(&vgi.ProcessParams{Args: argsWithBaseURL(strCol(t, "", false), dead)}); err != nil || len(st.Rows) != 0 {
+		t.Errorf("kev_cve(''): rows=%v err=%v", st, err)
+	}
+	if st, err := (&OSVVulnFunction{}).NewState(&vgi.ProcessParams{Args: argsWithBaseURL(strCol(t, "", false), dead)}); err != nil || len(st.Rows) != 0 {
+		t.Errorf("osv_vuln(''): rows=%v err=%v", st, err)
+	}
+}
+
 func TestCVEFunctionUnknownErrors(t *testing.T) {
 	base, cleanup := mockBaseURL(t)
 	defer cleanup()

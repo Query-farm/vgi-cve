@@ -88,6 +88,15 @@ WHERE cve_id = 'CVE-2021-44228';
 ----
 CVE-2021-44228	Apache Log4j2 2.0-beta9 through 2.15.0 JNDI features used in configuration, log messages, and parameters do not protect against attacker controlled LDAP and other JNDI related endpoints.	10.0
 
+# ---- blank argument -> no rows, no request ----
+
+query III
+SELECT (SELECT count(*) FROM cve.cve('', base_url := 'http://127.0.0.1:1/unreachable')),
+       (SELECT count(*) FROM cve.cve_search(' ', base_url := 'http://127.0.0.1:1/unreachable')),
+       (SELECT count(*) FROM cve.cpe_cves('', base_url := 'http://127.0.0.1:1/unreachable'));
+----
+0	0	0
+
 # ---- unknown CVE -> clean error (mock returns 404) ----
 
 statement error

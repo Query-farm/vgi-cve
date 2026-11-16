@@ -329,7 +329,7 @@ func (f *KEVCVEFunction) NewState(params *vgi.ProcessParams) (*kevState, error) 
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) {
+	if isNullArg(params.Args, 0) || isBlank(args.CVEID) {
 		return &kevState{}, nil
 	}
 	rows, err := FetchKEV(context.Background(), args.BaseURL)

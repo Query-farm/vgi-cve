@@ -4,6 +4,7 @@ package cveworker
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Query-farm/vgi-go/vgi"
 	"github.com/Query-farm/vgi-rpc-go/vgirpc"
@@ -305,7 +306,7 @@ func (f *CVEFunction) NewState(params *vgi.ProcessParams) (*cveState, error) {
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) {
+	if isNullArg(params.Args, 0) || isBlank(args.CVEID) {
 		return &cveState{}, nil
 	}
 	row, err := clientFrom(args.BaseURL, args.APIKey).FetchCVE(context.Background(), args.CVEID)
@@ -416,7 +417,7 @@ func (f *CVESearchFunction) NewState(params *vgi.ProcessParams) (*cveSearchState
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) {
+	if isNullArg(params.Args, 0) || isBlank(args.Keyword) {
 		return &cveSearchState{}, nil
 	}
 	rows, err := clientFrom(args.BaseURL, args.APIKey).SearchKeyword(context.Background(), args.Keyword)
@@ -523,7 +524,7 @@ func (f *CPECVEsFunction) NewState(params *vgi.ProcessParams) (*cpeCVEsState, er
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) {
+	if isNullArg(params.Args, 0) || isBlank(args.CPE) {
 		return &cpeCVEsState{}, nil
 	}
 	rows, err := clientFrom(args.BaseURL, args.APIKey).CVEsForCPE(context.Background(), args.CPE)
@@ -688,6 +689,11 @@ func buildScoredString(rows []CVERow, fn func(CVERow) string) arrow.Array {
 	}
 	return b.NewArray()
 }
+
+// isBlank reports whether a bound string argument is empty or whitespace. A
+// blank id/keyword/CPE yields no rows without a network call (the same as
+// NULL), so a bare scan never depends on the remote API being up.
+func isBlank(s string) bool { return strings.TrimSpace(s) == "" }
 
 // isNullArg reports whether positional argument pos is present and NULL.
 func isNullArg(args *vgi.Arguments, pos int) bool {

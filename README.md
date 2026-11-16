@@ -226,8 +226,8 @@ FROM cve.cve('CVE-2021-44228', api_key := 'your-nvd-key');
 
 - **Offline first.** `cvss_severity` and `cvss_base_score` make no network call
   and are fully deterministic — ideal for scoring vectors already in your data.
-- **NULL / absent input → no rows.** A NULL id/keyword/cpe/package yields zero
-  rows, and so does an empty `epss([])` list. An id that isn't listed is zero
+- **NULL / blank input → no rows.** A NULL or empty id/keyword/cpe/package
+  yields zero rows without making a request, and so does an empty `epss([])` list. An id that isn't listed is zero
   rows for `kev_cve` and `osv_vuln`, while `cve()` raises a 404 error.
 - **No CVSS metrics → NULL score.** Records still under analysis surface a NULL
   `cvss_score` (and NULL `cvss_severity` / `cvss_vector`) rather than a

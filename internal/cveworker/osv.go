@@ -414,7 +414,7 @@ func (f *OSVQueryFunction) NewState(params *vgi.ProcessParams) (*osvState, error
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) || isNullArg(params.Args, 1) {
+	if isNullArg(params.Args, 0) || isNullArg(params.Args, 1) || isBlank(args.Ecosystem) || isBlank(args.Name) {
 		return &osvState{}, nil
 	}
 	rows, err := QueryOSV(context.Background(), args.BaseURL, args.Ecosystem, args.Name, args.Version)
@@ -495,7 +495,7 @@ func (f *OSVVulnFunction) NewState(params *vgi.ProcessParams) (*osvState, error)
 	if err := vgi.BindArgs(params.Args, &args); err != nil {
 		return nil, err
 	}
-	if isNullArg(params.Args, 0) {
+	if isNullArg(params.Args, 0) || isBlank(args.ID) {
 		return &osvState{}, nil
 	}
 	row, err := FetchOSVVuln(context.Background(), args.BaseURL, args.ID)
