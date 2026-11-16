@@ -40,8 +40,9 @@ test-unit:
 	go test ./...
 
 # Build both binaries, start the mock NVD server on a free port (it prints
-# PORT:<n>), point the worker's table functions at it via VGI_CVE_TEST_URL
-# (used as the base_url option), run the SQL suite, then stop the mock server.
+# PORT:<n>), point the worker's table functions at it via VGI_CVE_TEST_URL /
+# VGI_CVE_KEV_URL / VGI_CVE_EPSS_URL / VGI_CVE_OSV_URL (each used as base_url),
+# run the SQL suite, then stop the mock server.
 # We capture haybarn's exit status so the trap's SIGTERM to the mock does not
 # mask a successful test run.
 test-sql: build
@@ -61,6 +62,9 @@ test-sql: build
 	STATUS=0; \
 	VGI_CVE_WORKER="$(WORKER_PATH)" \
 	VGI_CVE_TEST_URL="http://127.0.0.1:$$PORT/rest/json/cves/2.0" \
+	VGI_CVE_KEV_URL="http://127.0.0.1:$$PORT/sites/default/files/feeds/known_exploited_vulnerabilities.json" \
+	VGI_CVE_EPSS_URL="http://127.0.0.1:$$PORT/data/v1/epss" \
+	VGI_CVE_OSV_URL="http://127.0.0.1:$$PORT/v1" \
 		haybarn-unittest --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)" || STATUS=$$?; \
 	exit $$STATUS
 

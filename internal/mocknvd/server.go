@@ -1,7 +1,8 @@
 // Copyright 2026 Query Farm LLC - https://query.farm
 
 // Package mocknvd is an embedded HTTP server that serves canned NVD 2.0 CVE API
-// JSON. It is shared by the Go unit tests (httptest) and the standalone
+// JSON, plus canned CISA KEV, FIRST EPSS and OSV.dev responses (kev.go,
+// epss.go, osv.go). It is shared by the Go unit tests (httptest) and the standalone
 // cmd/mockserver binary used by the haybarn SQL E2E. It honors the same query
 // parameters as the real NVD endpoint that this worker uses:
 //
@@ -20,11 +21,23 @@ import (
 	"strconv"
 )
 
-// Handler returns an http.Handler serving the canned NVD 2.0 responses at the
-// single path the worker calls. Mount it at /rest/json/cves/2.0.
+// NVDPath is where the mock serves the NVD 2.0 CVE API.
+const NVDPath = "/rest/json/cves/2.0"
+
+// Handler returns an http.Handler serving every canned API the worker calls,
+// each at the same path as the real service:
+//
+//	/rest/json/cves/2.0                                       NVD 2.0 (base_url = <root>/rest/json/cves/2.0)
+//	/sites/default/files/feeds/known_exploited_vulnerabilities.json  CISA KEV (base_url = <root><KEVPath>)
+//	/data/v1/epss                                             FIRST EPSS (base_url = <root>/data/v1/epss)
+//	/v1/query, /v1/vulns/{id}                                 OSV.dev (base_url = <root>/v1)
 func Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/rest/json/cves/2.0", serve)
+	mux.HandleFunc(NVDPath, serve)
+	mux.HandleFunc(KEVPath, serveKEV)
+	mux.HandleFunc(EPSSPath, serveEPSS)
+	mux.HandleFunc(OSVPrefix+"/query", serveOSVQuery)
+	mux.HandleFunc(OSVPrefix+"/vulns/", serveOSVVuln)
 	return mux
 }
 

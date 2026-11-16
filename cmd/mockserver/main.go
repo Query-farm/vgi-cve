@@ -1,7 +1,8 @@
 // Copyright 2026 Query Farm LLC - https://query.farm
 
 // Command mockserver runs a standalone HTTP server that serves canned NVD 2.0
-// CVE API JSON (from internal/mocknvd). It is used by the haybarn SQL
+// CVE API, CISA KEV feed, FIRST EPSS and OSV.dev JSON (from internal/mocknvd),
+// each at the same path as the real service. It is used by the haybarn SQL
 // end-to-end tests: the Makefile starts it on a free port, reads the printed
 // PORT line, and points the worker's table functions at it via the base_url
 // option.

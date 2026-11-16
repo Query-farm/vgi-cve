@@ -701,11 +701,17 @@ func isNullArg(args *vgi.Arguments, pos int) bool {
 	return col.Len() == 0 || col.IsNull(0)
 }
 
-// Register registers all CVE functions (offline scalars + NVD table functions).
+// Register registers all CVE functions (offline scalars + NVD, KEV, EPSS and
+// OSV table functions).
 func Register(w *vgi.Worker) {
 	w.RegisterScalar(NewCVSSSeverityFunction())
 	w.RegisterScalar(NewCVSSBaseScoreFunction())
 	w.RegisterTable(NewCVEFunction())
 	w.RegisterTable(NewCVESearchFunction())
 	w.RegisterTable(NewCPECVEsFunction())
+	w.RegisterTable(NewKEVFunction())
+	w.RegisterTable(NewKEVCVEFunction())
+	w.RegisterTable(NewEPSSFunction())
+	w.RegisterTable(NewOSVQueryFunction())
+	w.RegisterTable(NewOSVVulnFunction())
 }

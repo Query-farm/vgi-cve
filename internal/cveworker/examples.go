@@ -54,6 +54,34 @@ var ExampleSearchAffectsInstalled = vgi.CatalogExample{
 		"installed Apache Log4j 2.14.1 CPE, most severe first.",
 }
 
+// ExamplePrioritizeCPE is the NVD + KEV + EPSS prioritization query: list
+// the CVEs NVD records against an installed CPE, flag the ones CISA lists as
+// known exploited, attach each CVE's EPSS exploitation probability, and rank
+// exploited-first, then by EPSS, then by CVSS.
+var ExamplePrioritizeCPE = vgi.CatalogExample{
+	SQL: "WITH n AS (SELECT cve_id, cvss_score, cvss_severity " +
+		"FROM cve.main.cpe_cves('cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*')) " +
+		"SELECT n.cve_id, n.cvss_score, n.cvss_severity, k.cve_id IS NOT NULL AS in_kev, " +
+		"k.known_ransomware_campaign_use, e.epss, e.percentile " +
+		"FROM n LEFT JOIN cve.main.kev() k ON k.cve_id = n.cve_id " +
+		"LEFT JOIN cve.main.epss(['CVE-2021-44228', 'CVE-2021-45046', 'CVE-2021-45105', 'CVE-2021-44832']) e " +
+		"ON e.cve_id = n.cve_id " +
+		"ORDER BY in_kev DESC, e.epss DESC NULLS LAST, n.cvss_score DESC NULLS LAST, n.cve_id;",
+	Description: "Prioritize the CVEs affecting Apache Log4j 2.14.1: flag CISA known-exploited ones, " +
+		"attach EPSS exploitation probability, and rank exploited-first, then by EPSS and CVSS.",
+}
+
+// ExampleOSVPackageInKEV expands an osv_query result's CVE aliases and flags
+// the ones in the CISA KEV catalog.
+var ExampleOSVPackageInKEV = vgi.CatalogExample{
+	SQL: "WITH o AS (SELECT id, unnest(cve_ids) AS cve_id, database_severity, fixed_versions " +
+		"FROM cve.main.osv_query('Maven', 'org.apache.logging.log4j:log4j-core', version := '2.14.1')) " +
+		"SELECT o.id, o.cve_id, o.database_severity, k.cve_id IS NOT NULL AS in_kev, o.fixed_versions " +
+		"FROM o LEFT JOIN cve.main.kev() k ON k.cve_id = o.cve_id ORDER BY in_kev DESC, o.id, o.cve_id;",
+	Description: "Find the OSV advisories affecting log4j-core 2.14.1, expand their CVE ids, and flag " +
+		"which are CISA known-exploited, with the versions that fix them.",
+}
+
 // ExampleQueriesJSON serializes examples as the JSON {description, sql} list
 // carried by the vgi.example_queries / vgi.executable_examples tags. The
 // worker entry point uses it too, so every list is built from the same

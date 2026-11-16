@@ -8,8 +8,10 @@ Go VGI worker — same tooling, layout, and SDK conventions.
 ## What this is
 
 A [VGI](https://query.farm) worker (Go) that looks up **CVE/vulnerability data**
-from the **NVD 2.0 API** and computes **CVSS v3.1 scores**, exposed as DuckDB
-SQL functions. Defensive vuln-management tool. Built on the
+from the **NVD 2.0 API**, adds prioritization signals from **CISA KEV** (known
+exploited) and **FIRST EPSS** (exploit probability), queries **OSV.dev** for
+open-source package advisories, and computes **CVSS v3.1 scores**, exposed as
+DuckDB SQL functions. Defensive vuln-management tool. Built on the
 [`vgi-go`](https://github.com/Query-farm/vgi-go) SDK over stdio. Catalog name:
 `cve`.
 
@@ -21,11 +23,18 @@ cmd/mockserver/main.go        standalone mock NVD HTTP server for the SQL E2E
 internal/cveworker/
   cvss.go                     offline CVSS math: Severity() + BaseScore() (v3.1 equation)
   client.go                   NVD 2.0 HTTP client (net/http + encoding/json); CVERow projection
-  functions.go                the 2 scalars + 3 table functions + Register(w)
+  functions.go                the 2 scalars + 3 NVD table functions + bands table + Register(w)
+  kev.go                      CISA KEV feed client (15-min in-process cache) + kev() / kev_cve()
+  epss.go                     FIRST EPSS client (2000-char cve= chunking, offset paging) + epss(list)
+  osv.go                      OSV.dev client (/query paging, /vulns/{id}) + osv_query() / osv_vuln()
+  httpget.go                  shared doJSON (status→error mapping, errNotFound) + generic nextRows cursor
+  arrays.go                   nullable VARCHAR / DATE and VARCHAR[] column builders
+  examples.go                 composed examples (incl. NVD+KEV+EPSS prioritization, OSV+KEV)
   *_test.go                   offline CVSS tests + httptest-mock client/function tests
 internal/mocknvd/
-  server.go                   Handler(): serves canned NVD 2.0 JSON by query param
-  data.go                     canned fixtures (Log4Shell, search/CPE records)
+  server.go                   Handler(): mounts every mock API at its real path; NVD by query param
+  data.go                     canned NVD fixtures (Log4Shell, search/CPE records)
+  kev.go / epss.go / osv.go   canned KEV feed, EPSS API (2000-char cap, 100-row page cap), OSV API
 test/sql/*.test               haybarn-unittest sqllogictest — authoritative E2E
 Makefile                      build / test-unit / test-sql / lint
 ```
@@ -42,6 +51,15 @@ The function surface deliberately splits into two halves:
   lookups in `client.go`, wrapped as `vgi.TypedTableFunc[S]` in `functions.go`.
   Each accepts named `base_url` + `api_key` options; the E2E points `base_url`
   at the mock so it never touches the real NVD.
+- **Exploit intel + OSV table functions (`kev`, `kev_cve`, `epss`, `osv_query`,
+  `osv_vuln`)** — one file per source. Each takes a `base_url` that replaces the
+  whole endpoint: the KEV feed URL, the EPSS endpoint, or the OSV root
+  (`.../v1`). `epss` takes a `VARCHAR[]` positional. `vgi.BindArgs` can't
+  extract LIST scalars, so `epssArgs` (with the `[]string` field) only feeds
+  `DeriveArgSpecs`. `NewState` binds the named options through `epssNamedArgs`
+  and reads the list with `stringListArg`. DuckDB rejects subqueries as
+  table-function arguments ("Table function cannot contain subqueries"), so a
+  dynamic list goes through `SET VARIABLE` + `getvariable()`.
 
 `cvss_base_score` follows the official CVSS v3.1 base equation
 (ISCBase → Impact → Exploitability → Roundup), including the Scope:Changed path
@@ -131,6 +149,13 @@ column (the NULL `cvss_score`), build a `array.Float64Builder` directly and call
 4. **Bounded + timed network.** Searches page (`resultsPerPage`/`startIndex`)
    but stop at `MaxResults = 100`; the HTTP client has a 30 s timeout. 4xx/5xx,
    429 (rate limit), 404 (unknown CVE), and bad JSON all map to clear errors.
+   Other bounds: `MaxOSVResults = 1000`, `MaxEPSSCVEs = 10000`, and EPSS's
+   documented 2000-char limit on `cve=` (`chunkCVEParam`). An unknown id is
+   zero rows for `osv_vuln` and `kev_cve`, but still an error for NVD `cve()`.
+
+5. **Dates are DATE, timestamps are VARCHAR.** KEV `date_added`/`due_date` and
+   EPSS `date` are Arrow date32, so DuckDB sees `DATE`. NVD/OSV timestamps stay
+   ISO-8601 `VARCHAR`, matching the original NVD surface.
 
 ## Mock-NVD E2E (how `make test-sql` works)
 
@@ -140,8 +165,11 @@ Mirrors `vgi-grpc`'s start/stop pattern:
 2. `mockserver --addr 127.0.0.1:0` binds a free port and prints `PORT:<n>`; the
    Makefile captures it.
 3. The Makefile exports `VGI_CVE_WORKER` (the worker binary, the ATTACH
-   `LOCATION`) and `VGI_CVE_TEST_URL=http://127.0.0.1:<n>/rest/json/cves/2.0`
-   (read by `.test` files and passed as the `base_url` option).
+   `LOCATION`) and `VGI_CVE_TEST_URL=http://127.0.0.1:<n>/rest/json/cves/2.0`,
+   plus `VGI_CVE_KEV_URL` / `VGI_CVE_EPSS_URL` / `VGI_CVE_OSV_URL`. The `.test`
+   files read these and pass them as `base_url`. `ci/run-integration.sh`
+   exports the same variables, so CI's transport matrix needs no workflow
+   change.
 4. `haybarn-unittest --keep-home --test-dir . "test/sql/*"` runs the suite. Its exit status
    is captured so the `trap`'s SIGTERM to the mock doesn't mask success.
 5. A shell `trap` kills the mock server and cleans up on exit.
@@ -160,8 +188,14 @@ no CVSS → NULL score, severity and vector).
   `cve` parse, `cve_search` pagination, `cpe_cves` (incl. NULL score), and
   404/500/429/bad-JSON errors, plus the VGI `NewState` path and NULL→no-rows.
 - **SQL (`make test-sql`)** — `test/sql/cvss_offline.test` (offline scalars, no
-  mock needed) and `test/sql/cve_api.test` (table functions via the mock
-  `base_url`, incl. an unknown-CVE `statement error`).
+  mock needed), `test/sql/cve_api.test` (NVD table functions via the mock
+  `base_url`, incl. an unknown-CVE `statement error`) and
+  `test/sql/exploit_intel.test` (KEV/EPSS/OSV: DATE and list types, EPSS
+  batching of 400 ids, OSV paging and version filtering, and the composed
+  NVD+KEV+EPSS and OSV+KEV queries).
+- **Go** also has `exploit_intel_test.go`: KEV parse/cache/errors, EPSS
+  dedup/history/batching (asserts no request's `cve=` exceeds 2000 chars),
+  OSV paging/ranges/404→nil, and gob round-trips of the new cursor states.
 
 ## Conventions
 

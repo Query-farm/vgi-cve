@@ -108,6 +108,11 @@ else
   fi
   rm -f "$MOCK_PORT_FILE"
   export VGI_CVE_TEST_URL="http://127.0.0.1:$PORT/rest/json/cves/2.0"
+  # The same mock also serves the CISA KEV feed, FIRST EPSS and OSV.dev at
+  # their real paths; test/sql/exploit_intel.test passes these as base_url.
+  export VGI_CVE_KEV_URL="http://127.0.0.1:$PORT/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+  export VGI_CVE_EPSS_URL="http://127.0.0.1:$PORT/data/v1/epss"
+  export VGI_CVE_OSV_URL="http://127.0.0.1:$PORT/v1"
   echo "Mock NVD server listening on $VGI_CVE_TEST_URL (pid $MOCK_PID)"
 fi
 
